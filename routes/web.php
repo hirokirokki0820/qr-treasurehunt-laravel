@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventTimerController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JoinController;
@@ -44,6 +45,9 @@ Route::prefix('host')->group(function () {
         Route::delete('events/{event}/prizes', [PrizeController::class, 'destroyMany'])->name('events.prizes.destroy-many');
         Route::post('events/{event}/reset-acquisitions', [EventController::class, 'resetAcquisitions'])->name('events.reset-acquisitions');
         Route::post('events/{event}/end', [EventController::class, 'end'])->name('events.end');
+        Route::post('events/{event}/timer/start', [EventTimerController::class, 'start'])->name('events.timer.start');
+        Route::post('events/{event}/timer/extend', [EventTimerController::class, 'extend'])->name('events.timer.extend');
+        Route::post('events/{event}/timer/stop', [EventTimerController::class, 'stop'])->name('events.timer.stop');
 
         Route::scopeBindings()->group(function () {
             Route::resource('events.prizes', PrizeController::class)->except('index');
@@ -58,6 +62,8 @@ Route::prefix('host')->group(function () {
 /*
 | 参加者
 */
+Route::post('guest/switch-to-organizer', [GuestController::class, 'switchToOrganizer'])->name('guest.switch-to-organizer');
+
 Route::middleware(RememberGuestVisitor::class)->group(function () {
     Route::get('guest', [GuestController::class, 'index'])->name('guest.home');
     Route::get('participant/required', [GuestController::class, 'required'])->name('participant.required');
@@ -72,6 +78,7 @@ Route::middleware(RememberGuestVisitor::class)->group(function () {
         Route::prefix('play')->name('play.')->group(function () {
             Route::get('/', [PlayController::class, 'index'])->name('index');
             Route::get('scan', [PlayController::class, 'scan'])->name('scan');
+            Route::get('status', [PlayController::class, 'status'])->name('status');
             Route::post('logout', [PlayController::class, 'logout'])->name('logout');
         });
     });

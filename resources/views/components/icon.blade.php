@@ -9,6 +9,19 @@
             <path d="M6 14h12v7H6z" />
             <path d="M17 12h.01" />
             @break
+        @case('timer')
+            <circle cx="12" cy="13" r="8" />
+            <path d="M12 9v4l2.5 2.5M9.5 2.5h5M12 2.5V5" />
+            @break
+        @case('hourglass')
+            <path d="M6 2.5h12M6 21.5h12M7 2.5c0 5 10 6 10 9.5S7 17 7 21.5M17 2.5c0 5-10 6-10 9.5s10 5 10 9.5" />
+            @break
+        @case('play')
+            <path d="M7 4.5v15l12-7.5z" fill="currentColor" />
+            @break
+        @case('menu')
+            <path d="M4 6h16M4 12h16M4 18h16" />
+            @break
         @case('camera')
             <path d="M14.5 4h-5L7.5 6.5H5A2 2 0 0 0 3 8.5v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2.5Z" />
             <circle cx="12" cy="13" r="3.5" />

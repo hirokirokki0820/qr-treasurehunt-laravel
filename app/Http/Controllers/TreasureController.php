@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ClaimResult;
+use App\Enums\TimerState;
 use App\Models\Participant;
 use App\Models\Prize;
 use Illuminate\Http\RedirectResponse;
@@ -30,9 +31,13 @@ class TreasureController extends Controller
 
         $result = ClaimResult::tryFrom((string) $request->session()->get('claim_result'));
 
+        $timer = $participant->event->timerState();
+
         if ($result === null) {
             $result = match (true) {
                 $prize->participant_id === $participant->id => ClaimResult::AlreadyMine,
+                $timer === TimerState::Waiting => ClaimResult::NotStarted,
+                $timer === TimerState::Ended => ClaimResult::TimeUp,
                 $participant->hasReachedPrizeLimit() => ClaimResult::LimitReached,
                 ! $prize->is_miss && $prize->participant_id !== null => ClaimResult::TakenByOther,
                 default => null,
@@ -43,6 +48,7 @@ class TreasureController extends Controller
             'prize' => $prize,
             'result' => $result,
             'limitReached' => $participant->hasReachedPrizeLimit(),
+            'canScan' => $timer->acceptsTreasures() && ! $participant->hasReachedPrizeLimit(),
         ]);
     }
 

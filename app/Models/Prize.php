@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ClaimResult;
+use App\Enums\TimerState;
 use Database\Factories\PrizeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -60,6 +61,12 @@ class Prize extends Model
     {
         if ($this->participant_id === $participant->id) {
             return ClaimResult::AlreadyMine;
+        }
+
+        $timer = $participant->event->timerState();
+
+        if (! $timer->acceptsTreasures()) {
+            return $timer === TimerState::Waiting ? ClaimResult::NotStarted : ClaimResult::TimeUp;
         }
 
         $result = DB::transaction(function () use ($participant): ClaimResult {

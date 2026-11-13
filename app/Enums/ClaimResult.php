@@ -12,4 +12,6 @@ enum ClaimResult: string
     case TakenByOther = 'taken_by_other';
     case Miss = 'miss';
     case LimitReached = 'limit_reached';
+    case NotStarted = 'not_started';
+    case TimeUp = 'time_up';
 }

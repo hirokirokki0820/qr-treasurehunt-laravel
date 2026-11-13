@@ -1,4 +1,4 @@
-@props(['title' => null, 'wide' => false, 'forGuests' => false])
+@props(['title' => null, 'wide' => false, 'forGuests' => false, 'organizerMenu' => false])
 
 @php
     // 主催者用（/host 以下）と参加者用はログイン状態が別なので、今いる側のログインだけを見て表示を決める
@@ -46,6 +46,24 @@
                     </form>
                 @elseif (! $isHostArea && ! $isGuestVisitor && ! $participant)
                     <a href="{{ route('login') }}" class="rounded-lg px-2 py-1.5 font-bold text-ink-soft underline-offset-4 hover:underline">主催者ログイン</a>
+                @endif
+
+                @if ($organizerMenu)
+                    {{-- 主催者が参加用QRで試したあと、主催者用のトップページへ戻れるようにするメニュー --}}
+                    <details class="relative" data-menu>
+                        <summary class="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-lg border-2 border-ink bg-white shadow-[2px_2px_0_0_var(--color-ink)] transition hover:bg-parchment [&::-webkit-details-marker]:hidden" aria-label="メニュー">
+                            <x-icon name="menu" class="h-5 w-5" />
+                        </summary>
+                        <div class="absolute right-0 z-40 mt-2 w-60 rounded-xl border-2 border-ink bg-white p-1.5 shadow-[4px_4px_0_0_var(--color-ink)]">
+                            <form method="POST" action="{{ route('guest.switch-to-organizer') }}" data-confirm="主催者専用のトップページに切り替えます。よろしいですか？">
+                                @csrf
+                                <button type="submit" class="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-ink hover:bg-gold/20">
+                                    主催者専用トップページへ
+                                    <span aria-hidden="true" class="text-ink-soft">›</span>
+                                </button>
+                            </form>
+                        </div>
+                    </details>
                 @endif
             </nav>
         </div>

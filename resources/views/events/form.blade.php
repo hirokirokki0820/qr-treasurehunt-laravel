@@ -16,6 +16,14 @@
     </div>
     <p class="mt-1 text-xs text-ink-soft">空欄にすると上限なしになります。上限に達した参加者は、それ以上QRコードを読み取れなくなります。</p>
 </div>
+<div>
+    <label for="time_limit_minutes" class="label">制限時間</label>
+    <div class="flex items-center gap-2">
+        <input id="time_limit_minutes" name="time_limit_minutes" type="number" min="1" max="600" inputmode="numeric" value="{{ old('time_limit_minutes', $event->time_limit_minutes) }}" class="field w-28" placeholder="なし">
+        <span class="font-bold">分</span>
+    </div>
+    <p class="mt-1 text-xs text-ink-soft">空欄にすると制限時間なしになります。時間はイベントページの「宝探しスタート」を押したときから数えます。</p>
+</div>
 @php
     $countsMisses = (bool) old('count_misses_toward_limit', $event->count_misses_toward_limit ?? false);
 @endphp

@@ -8,7 +8,7 @@
                 <p class="mt-1 whitespace-pre-line text-ink-soft">{{ $event->description }}</p>
             @endif
             <p class="mt-2 inline-flex items-center gap-1 rounded-full bg-ink/8 px-3 py-1 text-xs font-bold text-ink-soft">
-                獲得上限：{{ $event->prizeLimitLabel() ?? 'なし' }}
+                獲得上限：{{ $event->prizeLimitLabel() ?? 'なし' }} ・ 制限時間：{{ $event->hasTimeLimit() ? $event->time_limit_minutes.'分' : 'なし' }}
             </p>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -19,6 +19,8 @@
             </form>
         </div>
     </div>
+
+    <x-event-timer :event="$event" />
 
     @php($showingRemaining = ($filters['stock'] ?? null) === 'available')
 

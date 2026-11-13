@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Middleware\RememberGuestVisitor;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
@@ -18,6 +21,7 @@ class GuestController extends Controller
         return view('guest.index', [
             'heading' => "QRコードを読み取って\n参加しよう",
             'lead' => '主催者が用意した「参加用QRコード」をカメラで読み取ると、宝探しに参加できます。',
+            'showOrganizerMenu' => true,
         ]);
     }
 
@@ -30,5 +34,16 @@ class GuestController extends Controller
             'heading' => 'まずは参加受付をしてね',
             'lead' => '主催者が用意した「参加用QRコード」を読み取って、ニックネームを登録してください。',
         ]);
+    }
+
+    /**
+     * ゲストの印を外して、主催者専用のトップページへ切り替える。
+     * 主催者が参加用QRで試しに参加したあと、トップページがゲスト用のままになるのを戻すため。
+     */
+    public function switchToOrganizer(Request $request): RedirectResponse
+    {
+        $request->session()->forget(RememberGuestVisitor::SESSION_KEY);
+
+        return redirect()->route('host');
     }
 }

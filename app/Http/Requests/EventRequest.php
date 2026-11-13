@@ -26,6 +26,7 @@ class EventRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:1000'],
             'max_prizes_per_participant' => ['nullable', 'integer', 'min:1', 'max:999'],
             'count_misses_toward_limit' => ['boolean'],
+            'time_limit_minutes' => ['nullable', 'integer', 'min:1', 'max:600'],
             'copy_from' => ['nullable', 'integer', Rule::exists('events', 'id')->where('user_id', $this->user()->id)],
             'copy_prizes' => ['boolean'],
         ];
@@ -40,6 +41,7 @@ class EventRequest extends FormRequest
             'name' => 'イベント名',
             'description' => '説明',
             'max_prizes_per_participant' => '1人あたりの獲得上限',
+            'time_limit_minutes' => '制限時間',
             'copy_from' => 'コピー元のイベント',
         ];
     }

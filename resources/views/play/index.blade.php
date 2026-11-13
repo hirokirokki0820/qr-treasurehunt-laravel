@@ -7,7 +7,11 @@
         <p class="mt-2 whitespace-pre-line text-ink-soft">{{ $event->description }}</p>
     @endif
 
-    @if ($remainingAllowance === 0)
+    @php($timer = $event->timerState())
+
+    @if ($timer === \App\Enums\TimerState::Ended)
+        <x-play-timer :event="$event" />
+    @elseif ($remainingAllowance === 0)
         <x-limit-reached :event="$event" class="mt-6" />
     @else
         @if ($remainingAllowance !== null)
@@ -15,8 +19,11 @@
                 お宝は{{ $event->prizeLimitLabel() }} ・ あと{{ $remainingAllowance }}個
             </p>
         @endif
-        <a href="{{ route('play.scan') }}" class="btn-primary mt-4 w-full py-4 text-xl"><x-icon name="camera" class="h-7 w-7 shrink-0" />QRコードを読み取る</a>
-        <p class="mt-2 text-center text-xs text-ink-soft">スマホ標準のカメラアプリで読み取ってもOK</p>
+        <x-play-timer :event="$event" />
+        @if ($timer->acceptsTreasures())
+            <a href="{{ route('play.scan') }}" class="btn-primary mt-4 w-full py-4 text-xl"><x-icon name="camera" class="h-7 w-7 shrink-0" />QRコードを読み取る</a>
+            <p class="mt-2 text-center text-xs text-ink-soft">スマホ標準のカメラアプリで読み取ってもOK</p>
+        @endif
     @endif
 
     <section class="card mt-8">

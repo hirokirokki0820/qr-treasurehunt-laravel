@@ -39,7 +39,7 @@ class EventController extends Controller
             ? $pastEvents->firstWhere('id', (int) $request->query('copy_from'))
             : null;
 
-        $event = new Event($source?->only(['name', 'description', 'max_prizes_per_participant', 'count_misses_toward_limit']) ?? []);
+        $event = new Event($source?->only(['name', 'description', 'max_prizes_per_participant', 'count_misses_toward_limit', 'time_limit_minutes']) ?? []);
 
         return view('events.create', [
             'event' => $event,
@@ -55,7 +55,7 @@ class EventController extends Controller
             : null;
 
         $event = DB::transaction(function () use ($request, $source): Event {
-            $event = $request->user()->events()->create($request->safe()->only(['name', 'description', 'max_prizes_per_participant', 'count_misses_toward_limit']));
+            $event = $request->user()->events()->create($request->safe()->only(['name', 'description', 'max_prizes_per_participant', 'count_misses_toward_limit', 'time_limit_minutes']));
 
             if ($source !== null && $request->boolean('copy_prizes')) {
                 $event->copyPrizesFrom($source);
@@ -136,7 +136,7 @@ class EventController extends Controller
     {
         Gate::authorize('manage', $event);
 
-        $event->update($request->safe()->only(['name', 'description', 'max_prizes_per_participant', 'count_misses_toward_limit']));
+        $event->update($request->safe()->only(['name', 'description', 'max_prizes_per_participant', 'count_misses_toward_limit', 'time_limit_minutes']));
 
         return redirect()->route('events.show', $event)->with('status', 'イベントを更新しました。');
     }

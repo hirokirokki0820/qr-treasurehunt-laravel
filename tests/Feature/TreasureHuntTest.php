@@ -392,3 +392,21 @@ test('a logged in organizer can still use the organizer pages after opening a jo
     $this->get(route('host'))->assertRedirect('/host/events');
     $this->get(route('events.index'))->assertOk()->assertSee('主催者メニュー');
 });
+
+test('the guest page offers a menu to switch back to the organizer top page', function () {
+    $this->get(route('guest.home'))
+        ->assertOk()
+        ->assertSee('主催者専用トップページへ')
+        ->assertSee('data-confirm="主催者専用のトップページに切り替えます。よろしいですか？"', false);
+
+    $this->get(route('home'))->assertRedirect(route('guest.home'));
+
+    $this->post(route('guest.switch-to-organizer'))->assertRedirect(route('host'));
+
+    $this->get(route('home'))->assertOk()->assertSee('主催者として始める');
+});
+
+test('the organizer menu is only on the guest top page', function () {
+    $this->get(route('participant.required'))->assertDontSee('主催者専用トップページへ');
+    $this->get(route('join', Event::factory()->create()))->assertDontSee('主催者専用トップページへ');
+});

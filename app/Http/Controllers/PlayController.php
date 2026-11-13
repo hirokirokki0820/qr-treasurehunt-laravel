@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Participant;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,7 +28,7 @@ class PlayController extends Controller
     }
 
     /**
-     * QRスキャナー。獲得上限に達した参加者にはスキャナーを出さない。
+     * QRスキャナー。獲得上限に達した参加者や、宝探しの時間外にはスキャナーを出さない。
      */
     public function scan(Request $request): View
     {
@@ -36,7 +37,16 @@ class PlayController extends Controller
         return view('play.scan', [
             'event' => $participant->event,
             'limitReached' => $participant->hasReachedPrizeLimit(),
+            'timer' => $participant->event->timerState(),
         ]);
+    }
+
+    /**
+     * 参加者の画面が数秒ごとに問い合わせる、宝探しタイマーの状態。
+     */
+    public function status(Request $request): JsonResponse
+    {
+        return response()->json($this->participant($request)->event->timerStatus());
     }
 
     /**
