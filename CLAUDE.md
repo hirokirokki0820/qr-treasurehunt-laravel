@@ -1,3 +1,11 @@
+# このプロジェクトで守ること
+
+## 変更の保存(GitHub)
+- 作業の区切りがついたら、その都度コミットして GitHub(origin/main)に上げる。Mac の中だけに変更を残さない
+- 作業を終える前に `git status` を見て、コミットしていない変更が残っていないか確かめる
+- コミットの前にテスト(`php artisan test`)を通す。通らないときは上げずに理由を伝える
+- `.env` やパスワード・合言葉はコミットしない
+
 <laravel-boost-guidelines>
 === foundation rules ===
 
