@@ -6,6 +6,11 @@
 - コミットの前にテスト(`php artisan test`)を通す。通らないときは上げずに理由を伝える
 - `.env` やパスワード・合言葉はコミットしない
 
+## テストの動かし方(Claude が作業するとき)
+- Claude の作業環境では PHP 8.5 が使えないので、テストは Mac で動かす
+- 利用者に、フォルダ直下の `テストを実行.command` をダブルクリックしてもらう(Git には入れていないファイル)
+- 結果は `storage/logs/claude-test.log` に残るので、それを読んで合否を判断する
+
 <laravel-boost-guidelines>
 === foundation rules ===
 
