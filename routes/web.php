@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\KobappLoginController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventTimerController;
 use App\Http\Controllers\GuestController;
@@ -24,10 +24,10 @@ Route::prefix('host')->group(function () {
     Route::redirect('/', '/host/events')->name('host');
 
     Route::middleware('guest:web')->group(function () {
-        Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
-        Route::post('register', [RegisteredUserController::class, 'store']);
+        // 主催者は「kobapp でログイン」で入る（アカウント名とパスワードでのログインと登録はやめた）
         Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
-        Route::post('login', [AuthenticatedSessionController::class, 'store']);
+        Route::get('auth/kobapp', [KobappLoginController::class, 'redirect'])->middleware('throttle:20,1')->name('login.kobapp');
+        Route::get('auth/kobapp/callback', [KobappLoginController::class, 'callback'])->middleware('throttle:20,1')->name('login.kobapp.callback');
     });
 
     Route::middleware('auth:web')->group(function () {

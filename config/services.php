@@ -28,6 +28,18 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    /*
+    | kobapp でログイン（kobapp.jp の共通アカウント）
+    | redirect_uri を空にすると、このアプリの /host/auth/kobapp/callback を使う。
+    | kobapp.jp 側に登録した戻り先と1文字でも違うとログインできない。
+    */
+    'kobapp' => [
+        'url' => env('KOBAPP_URL', 'https://kobapp.jp'),
+        'client_id' => env('KOBAPP_CLIENT_ID', 'qr-takarasagashi'),
+        'client_secret' => env('KOBAPP_CLIENT_SECRET'),
+        'redirect_uri' => env('KOBAPP_REDIRECT_URI'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

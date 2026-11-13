@@ -25,6 +25,7 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
+            'kobapp_user_id' => (string) fake()->unique()->numberBetween(1, 999999999),
             'name' => fake()->unique()->bothify('user####??'),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),

@@ -11,9 +11,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 /**
- * 宝探しイベントの主催者。name をログイン用のアカウント名として使う。
+ * 宝探しイベントの主催者。「kobapp でログイン」で入り、kobapp のユーザーID（kobapp_user_id）で見分ける。
  */
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['kobapp_user_id', 'name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {

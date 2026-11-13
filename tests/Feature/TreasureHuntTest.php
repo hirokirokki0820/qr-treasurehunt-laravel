@@ -338,7 +338,7 @@ test('visitors see the top page with links to the organizer pages', function () 
     $this->get(route('home'))
         ->assertOk()
         ->assertSee('主催者として始める')
-        ->assertSee(route('register'));
+        ->assertSee(route('login'));
 });
 
 test('someone logged in as both organizer and participant sees each side separately', function () {

@@ -15,7 +15,6 @@ class DatabaseSeeder extends Seeder
     {
         $organizer = User::factory()->create([
             'name' => 'demo',
-            'email' => null,
         ]);
 
         $event = Event::factory()->for($organizer)->create([

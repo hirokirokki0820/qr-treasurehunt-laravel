@@ -11,8 +11,7 @@
             @auth('web')
                 <a href="{{ route('events.index') }}" class="btn-primary text-lg">主催者メニューへ</a>
             @else
-                <a href="{{ route('register') }}" class="btn-primary text-lg">主催者として始める</a>
-                <a href="{{ route('login') }}" class="btn-secondary text-lg">ログイン</a>
+                <a href="{{ route('login') }}" class="btn-primary text-lg">主催者として始める</a>
             @endauth
 
             @auth('participant')

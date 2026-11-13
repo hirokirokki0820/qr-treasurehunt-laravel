@@ -2,7 +2,7 @@
     <div class="group/select" data-selection-root>
         <div class="flex flex-wrap items-end justify-between gap-3">
             <div>
-                <p class="text-sm font-bold text-ink-soft">{{ auth()->user()->name }} さんのマイページ</p>
+                <p class="text-sm font-bold text-ink-soft">{{ auth()->user()->email }} さんのマイページ</p>
                 <h1 class="text-2xl font-black">イベント一覧</h1>
             </div>
             <div class="flex flex-wrap items-center gap-3">

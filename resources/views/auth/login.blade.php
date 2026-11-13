@@ -1,29 +1,20 @@
 <x-layouts.app title="主催者ログイン">
-    <div class="card mx-auto max-w-md">
+    <div class="card mx-auto max-w-md text-center">
         <h1 class="text-2xl font-black">主催者ログイン</h1>
+        <p class="mt-3 text-ink-soft">QR宝探しの主催者は、kobapp アカウントでログインします。</p>
 
-        <form method="POST" action="{{ route('login') }}" class="mt-6 space-y-4">
-            @csrf
-            <x-errors />
+        @if (session('error'))
+            <p class="mt-4 rounded-xl bg-ruby/10 px-3 py-2 text-left text-sm font-bold text-ruby" role="alert">{{ session('error') }}</p>
+        @endif
+        @if (session('status'))
+            <p class="mt-4 rounded-xl bg-sea/10 px-3 py-2 text-left text-sm font-bold text-sea" role="status">{{ session('status') }}</p>
+        @endif
 
-            <div>
-                <label for="name" class="label">アカウント名</label>
-                <input id="name" name="name" type="text" value="{{ old('name') }}" class="field" required autofocus autocomplete="username">
-            </div>
-            <div>
-                <label for="password" class="label">パスワード</label>
-                <input id="password" name="password" type="password" class="field" required autocomplete="current-password">
-            </div>
-            <label class="flex items-center gap-2 text-sm font-bold">
-                <input type="checkbox" name="remember" value="1" class="h-4 w-4 accent-sea">
-                ログイン状態を保持する
-            </label>
+        <a href="{{ route('login.kobapp') }}" class="btn-primary mt-6 w-full py-4 text-lg">kobapp でログイン</a>
 
-            <button type="submit" class="btn-primary w-full">ログイン</button>
-        </form>
-
-        <p class="mt-5 text-center text-sm">
-            はじめての方は <a href="{{ route('register') }}" class="font-bold text-sea underline">アカウント作成</a>
+        <p class="mt-5 text-sm">
+            まだアカウントがない方は <a href="{{ rtrim(config('services.kobapp.url'), '/') }}/register" class="font-bold text-sea underline">kobapp で無料登録</a>
         </p>
+        <p class="mt-3 text-xs text-ink-soft">参加者の方は、ログインはいりません。会場の参加用QRコードを読み取ってください。</p>
     </div>
 </x-layouts.app>
