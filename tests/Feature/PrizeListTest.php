@@ -13,7 +13,8 @@ test('the event page asks the organizer to print the prize list until it is open
     $this->actingAs($user)->get(route('events.show', $event))
         ->assertOk()
         ->assertSee('data-prize-list-reminder', false)
-        ->assertSee('当日の備えに、景品リストを印刷しておきましょう');
+        ->assertSee('当日の備えに、景品リストを印刷しておきましょう')
+        ->assertDontSee('景品リストを印刷（緊急時に紙で続ける用）');
 
     $this->get(route('events.prize-list', $event))->assertOk();
 
