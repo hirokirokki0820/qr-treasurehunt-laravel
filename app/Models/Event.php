@@ -143,7 +143,7 @@ class Event extends Model
     }
 
     /**
-     * 参加者カードを作る。お試しモード中は、参加できる人数の残りまで。作った枚数を返す。
+     * 参加者カードを作る。参加できる人数の残りまで（participantLimit）。作った枚数を返す。
      *
      * @param  list<string>  $names
      */
@@ -152,8 +152,9 @@ class Event extends Model
         return DB::transaction(function () use ($names): int {
             $locked = static::query()->whereKey($this->id)->lockForUpdate()->firstOrFail();
 
-            if ($locked->trial_mode) {
-                $room = max(0, self::TRIAL_PARTICIPANT_LIMIT - $locked->participants()->count());
+            $limit = $locked->participantLimit();
+            if ($limit !== null) {
+                $room = max(0, $limit - $locked->participants()->count());
                 $names = array_slice($names, 0, $room);
             }
 
@@ -168,11 +169,27 @@ class Event extends Model
     }
 
     /**
-     * お試しモードで、もう参加できる人数に達しているか。
+     * 参加できる人数（参加者カードも含む）。お試しモード中は3人。それ以外は主催者の区分で決まる（null は上限なし）。
      */
-    public function isTrialFull(): bool
+    public function participantLimit(): ?int
     {
-        return $this->trial_mode && $this->participants()->count() >= self::TRIAL_PARTICIPANT_LIMIT;
+        $ownerLimit = $this->user?->participantLimit() ?? User::FREE_PARTICIPANT_LIMIT;
+
+        if ($this->trial_mode) {
+            return $ownerLimit === null ? self::TRIAL_PARTICIPANT_LIMIT : min(self::TRIAL_PARTICIPANT_LIMIT, $ownerLimit);
+        }
+
+        return $ownerLimit;
+    }
+
+    /**
+     * もう参加できる人数に達しているか。
+     */
+    public function isFull(): bool
+    {
+        $limit = $this->participantLimit();
+
+        return $limit !== null && $this->participants()->count() >= $limit;
     }
 
     /**

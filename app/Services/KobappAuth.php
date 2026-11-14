@@ -99,6 +99,9 @@ class KobappAuth
 
         $user = User::firstOrNew(['kobapp_user_id' => $sub]);
         $user->email = $email;
+        // 知らない値や、値がないときは、いちばん小さい区分にする
+        $plan = $response->json('plan');
+        $user->plan = is_string($plan) && in_array($plan, User::PLANS, true) ? $plan : 'free';
         $user->save();
 
         return $user;

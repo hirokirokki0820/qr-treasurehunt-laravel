@@ -29,9 +29,21 @@ class UserFactory extends Factory
             'name' => fake()->unique()->bothify('user####??'),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
+            // テストでは人数の上限にかからないよう、ふだんは運営者にしておく（上限のテストでは free() / monitor() を使う）
+            'plan' => 'admin',
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];
+    }
+
+    public function free(): static
+    {
+        return $this->state(fn () => ['plan' => 'free']);
+    }
+
+    public function monitor(): static
+    {
+        return $this->state(fn () => ['plan' => 'monitor']);
     }
 
     /**

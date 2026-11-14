@@ -210,3 +210,26 @@ test('organizer pages use their own session cookie so participants on the same b
     expect($guestCookie)->not->toBeNull()
         ->and($guestCookie->getPath())->toBe('/');
 });
+
+test('the plan from kobapp is saved on every login and unknown values fall back to free', function () {
+    $body = [];
+    Http::fake(['kobapp.example.test/sso/token' => function () use (&$body) {
+        return Http::response($body);
+    }]);
+
+    $login = function (array $extra) use (&$body): User {
+        $body = array_merge(['sub' => '42', 'email' => 'host@example.com', 'email_verified' => true], $extra);
+        $query = startKobappLogin();
+        test()->get(route('login.kobapp.callback', ['code' => 'the-code', 'state' => $query['state']]))->assertRedirect();
+        test()->assertAuthenticated();
+        test()->post(route('logout'));
+
+        return User::firstWhere('kobapp_user_id', '42');
+    };
+
+    expect($login(['plan' => 'monitor'])->plan)->toBe('monitor')
+        ->and($login(['plan' => 'admin'])->plan)->toBe('admin')
+        ->and($login(['plan' => 'owner'])->plan)->toBe('free')
+        ->and($login(['plan' => 'monitor'])->plan)->toBe('monitor')
+        ->and($login([])->plan)->toBe('free');
+});

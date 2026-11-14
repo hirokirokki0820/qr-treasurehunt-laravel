@@ -29,6 +29,40 @@ class User extends Authenticatable
     }
 
     /**
+     * 利用の区分（kobapp.jp から受け取る）。参加できる人数は participantLimit() で決まる。
+     *
+     * @var list<string>
+     */
+    public const PLANS = ['free', 'monitor', 'admin'];
+
+    /**
+     * 正式なサービスを始めるまで、モニターでない人が使える参加者の人数。
+     */
+    public const FREE_PARTICIPANT_LIMIT = 3;
+
+    /**
+     * 採用されたモニターが使える参加者の人数。
+     */
+    public const MONITOR_PARTICIPANT_LIMIT = 100;
+
+    /**
+     * 1つのイベントに参加できる人数（参加者カードも含む）。null は上限なし（運営者）。
+     */
+    public function participantLimit(): ?int
+    {
+        return match ($this->plan) {
+            'admin' => null,
+            'monitor' => self::MONITOR_PARTICIPANT_LIMIT,
+            default => self::FREE_PARTICIPANT_LIMIT,
+        };
+    }
+
+    public function isMonitorOrAdmin(): bool
+    {
+        return in_array($this->plan, ['monitor', 'admin'], true);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

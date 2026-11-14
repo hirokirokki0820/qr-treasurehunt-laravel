@@ -20,6 +20,8 @@
         </div>
     </div>
 
+    <x-plan-limit :event="$event" />
+
     <x-trial-mode :event="$event" />
 
     <x-event-timer :event="$event" />

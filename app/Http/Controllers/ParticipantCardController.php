@@ -67,7 +67,9 @@ class ParticipantCardController extends Controller
         $created = $event->createCards($names->all());
 
         if ($created < $names->count()) {
-            return back()->with('status', "参加者カードを{$created}枚作りました。お試しモード中は".Event::TRIAL_PARTICIPANT_LIMIT.'人までなので、残りは作りませんでした。');
+            $reason = $event->trial_mode ? 'お試しモード中は' : 'このイベントに参加できるのは';
+
+            return back()->with('status', "参加者カードを{$created}枚作りました。{$reason}".$event->participantLimit().'人までなので、残りは作りませんでした。');
         }
 
         return back()->with('status', "参加者カードを{$created}枚作りました。印刷して配ってください。");
