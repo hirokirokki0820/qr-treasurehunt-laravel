@@ -49,6 +49,7 @@ Route::prefix('host')->group(function () {
         Route::post('events/{event}/timer/start', [EventTimerController::class, 'start'])->name('events.timer.start');
         Route::post('events/{event}/timer/extend', [EventTimerController::class, 'extend'])->name('events.timer.extend');
         Route::post('events/{event}/timer/stop', [EventTimerController::class, 'stop'])->name('events.timer.stop');
+        Route::post('events/{event}/timer/reset', [EventTimerController::class, 'reset'])->name('events.timer.reset');
 
         Route::scopeBindings()->group(function () {
             Route::resource('events.prizes', PrizeController::class)->except('index');

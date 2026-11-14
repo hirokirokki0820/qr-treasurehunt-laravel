@@ -8,7 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * 主催者がイベントページで操作する、宝探しタイマー（スタート・延長・締め切り）。
+ * 主催者がイベントページで操作する、宝探しタイマー（スタート・延長・締め切り・スタート前に戻す）。
  */
 class EventTimerController extends Controller
 {
@@ -34,6 +34,16 @@ class EventTimerController extends Controller
         $event->extendTimer(self::EXTEND_MINUTES);
 
         return back()->with('status', '終了時刻を'.self::EXTEND_MINUTES.'分延ばしました（'.$event->ends_at?->format('H:i').' まで）。');
+    }
+
+    public function reset(Event $event): RedirectResponse
+    {
+        Gate::authorize('manage', $event);
+        abort_unless($event->hasTimeLimit(), 409);
+
+        $event->resetTimer();
+
+        return back()->with('status', 'タイマーをスタート前に戻しました。参加者の画面も「まもなく宝探しスタート！」に戻ります。');
     }
 
     public function stop(Event $event): RedirectResponse

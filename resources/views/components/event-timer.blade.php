@@ -33,7 +33,11 @@
                 <p class="mt-1 text-4xl font-black tabular-nums">残り <span data-timer-clock>{{ $clock($remaining) }}</span></p>
                 <p class="text-sm text-ink-soft">{{ $event->started_at->format('H:i') }} スタート ・ {{ $event->ends_at->format('H:i') }} 終了予定</p>
             </div>
-            <div class="flex gap-2 max-sm:w-full">
+            <div class="flex flex-wrap gap-2 max-sm:w-full">
+                <form method="POST" action="{{ route('events.timer.reset', $event) }}" class="flex-1" data-confirm="タイマーをスタート前に戻します。参加者の画面も「まもなく宝探しスタート！」に戻り、宝箱を開けられなくなります（獲得済みの景品はそのまま残ります）。よろしいですか？" data-timer-reset>
+                    @csrf
+                    <button type="submit" class="btn-secondary w-full gap-1.5 text-sm whitespace-nowrap"><x-icon name="reset" class="h-4 w-4" />タイマーをリセット</button>
+                </form>
                 <form method="POST" action="{{ route('events.timer.extend', $event) }}" class="flex-1">
                     @csrf
                     <button type="submit" class="btn-secondary w-full text-sm whitespace-nowrap">＋{{ \App\Http\Controllers\EventTimerController::EXTEND_MINUTES }}分延長</button>
@@ -53,9 +57,15 @@
             <p class="mt-1 text-lg font-black">宝探しは終了しました</p>
             <p class="text-sm text-ink-soft">{{ $event->started_at?->format('H:i') }}〜{{ $event->ends_at->format('H:i') }} ・ ここからは受付で景品の引き換えです</p>
         </div>
-        <form method="POST" action="{{ route('events.timer.start', $event) }}" class="max-sm:w-full" data-confirm="宝探しをもう一度スタートします（制限時間 {{ $event->time_limit_minutes }}分）。獲得済みの景品はそのまま残ります。よろしいですか？">
-            @csrf
-            <button type="submit" class="btn-secondary w-full gap-1.5 text-sm"><x-icon name="play" class="h-4 w-4" />もう一度スタート</button>
-        </form>
+        <div class="flex flex-wrap gap-2 max-sm:w-full">
+            <form method="POST" action="{{ route('events.timer.reset', $event) }}" class="flex-1" data-confirm="タイマーをスタート前に戻します。参加者の画面も「まもなく宝探しスタート！」に戻り、宝箱を開けられなくなります（獲得済みの景品はそのまま残ります）。よろしいですか？" data-timer-reset>
+                @csrf
+                <button type="submit" class="btn-secondary w-full gap-1.5 text-sm whitespace-nowrap"><x-icon name="reset" class="h-4 w-4" />タイマーをリセット</button>
+            </form>
+            <form method="POST" action="{{ route('events.timer.start', $event) }}" class="flex-1" data-confirm="宝探しをもう一度スタートします（制限時間 {{ $event->time_limit_minutes }}分）。獲得済みの景品はそのまま残ります。よろしいですか？">
+                @csrf
+                <button type="submit" class="btn-secondary w-full gap-1.5 text-sm whitespace-nowrap"><x-icon name="play" class="h-4 w-4" />もう一度スタート</button>
+            </form>
+        </div>
     </section>
 @endif

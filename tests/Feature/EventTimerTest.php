@@ -147,3 +147,46 @@ test('the qr scanner page has no countdown when the event has no time limit', fu
         ->assertSee('id="qr-scanner"', false)
         ->assertDontSee('data-timer-clock', false);
 });
+
+test('organizers can reset a started or ended timer back to waiting, and participants follow', function () {
+    [$organizer, $event, $participant, $prize] = timedEvent();
+    $event->startTimer();
+    expect($prize->claimFor($participant))->toBe(ClaimResult::Won);
+
+    $this->actingAs($organizer)->get(route('events.show', $event))
+        ->assertSee('data-timer-reset', false)
+        ->assertSee('タイマーをリセット');
+
+    $runningVersion = $event->fresh()->timerStatus()['version'];
+    $this->post(route('events.timer.reset', $event))->assertRedirect();
+
+    $event->refresh();
+    expect($event->timerState())->toBe(TimerState::Waiting)
+        ->and($event->started_at)->toBeNull()
+        ->and($prize->fresh()->participant_id)->toBe($participant->id);
+
+    $this->actingAs($participant, 'participant');
+    $status = $this->getJson(route('play.status'))->assertJson(['state' => 'waiting'])->json();
+    expect($status['version'])->not->toBe($runningVersion);
+    $this->get(route('play.index'))->assertSee('まもなく宝探しスタート！');
+
+    $event->startTimer();
+    $event->stopTimer();
+    $this->actingAs($organizer)->get(route('events.show', $event))
+        ->assertSeeInOrder(['タイマーをリセット', 'もう一度スタート']);
+    $this->post(route('events.timer.reset', $event));
+    expect($event->fresh()->timerState())->toBe(TimerState::Waiting);
+});
+
+test('the timer reset is only for the organizer of a timed event', function () {
+    [, $event] = timedEvent();
+    $event->startTimer();
+
+    $this->actingAs(User::factory()->create())
+        ->post(route('events.timer.reset', $event))
+        ->assertForbidden();
+    expect($event->fresh()->timerState())->toBe(TimerState::Running);
+
+    $untimed = Event::factory()->create(['time_limit_minutes' => null]);
+    $this->actingAs($untimed->user)->post(route('events.timer.reset', $untimed))->assertStatus(409);
+});
