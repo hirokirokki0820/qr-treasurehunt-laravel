@@ -32,3 +32,12 @@ test('every custom error page renders on its own', function (int $code, string $
     [429, '集中しています'],
     [500, '発生しました'],
 ]);
+
+test('pages carry the treasure chest icon', function () {
+    $this->get(route('home'))
+        ->assertSee('<link rel="icon" href="/favicon.svg" type="image/svg+xml">', false)
+        ->assertSee('<link rel="apple-touch-icon" href="/apple-touch-icon.png">', false);
+
+    expect(file_exists(public_path('favicon.svg')))->toBeTrue()
+        ->and(file_exists(public_path('apple-touch-icon.png')))->toBeTrue();
+});
