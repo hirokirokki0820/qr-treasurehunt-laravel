@@ -187,3 +187,12 @@ test('cards of another event or organizer cannot be deleted', function () {
 
     expect(Participant::find($card->id))->not->toBeNull();
 });
+
+test('the redeem scanner also accepts participant cards', function () {
+    [$user, $event] = cardEvent();
+
+    $this->actingAs($user)->get(route('redemption.scan', ['event' => $event->id]))
+        ->assertOk()
+        ->assertSee('data-accept-path="/host/redeem/,/host/card/"', false)
+        ->assertSee('「参加者カード」を読み取ると');
+});

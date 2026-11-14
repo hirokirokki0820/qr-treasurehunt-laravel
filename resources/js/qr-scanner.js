@@ -15,7 +15,8 @@ export function setUpScanner() {
     const stopButton = root.querySelector('[data-scanner-stop]');
     const message = root.querySelector('[data-scanner-message]');
     const readerId = 'qr-reader';
-    const acceptPath = root.dataset.acceptPath ?? '/treasure/';
+    // 読み取ってよいパス。カンマ区切りで複数（引き換えの画面は、引き換え用QRと参加者カードの両方）
+    const acceptPaths = (root.dataset.acceptPath ?? '/treasure/').split(',');
     const wrongMessage = root.dataset.wrongMessage ?? 'このQRコードは読み取れません。';
     const successMessage = root.dataset.successMessage ?? '読み取りました。移動します…';
     let scanner = null;
@@ -55,7 +56,9 @@ export function setUpScanner() {
             return;
         }
 
-        if (url.origin !== window.location.origin || !url.pathname.startsWith(acceptPath)) {
+        const acceptPath = acceptPaths.find((path) => url.pathname.startsWith(path));
+
+        if (url.origin !== window.location.origin || !acceptPath) {
             showMessage(wrongMessage, 'error');
 
             return;
