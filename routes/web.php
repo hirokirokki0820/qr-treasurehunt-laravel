@@ -4,9 +4,11 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\KobappLoginController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventTimerController;
+use App\Http\Controllers\EventTrialController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JoinController;
+use App\Http\Controllers\ParticipantCardController;
 use App\Http\Controllers\ParticipantController;
 use App\Http\Controllers\PlayController;
 use App\Http\Controllers\PrizeController;
@@ -41,11 +43,22 @@ Route::prefix('host')->group(function () {
         Route::get('events/{event}/participants', [EventController::class, 'participants'])->name('events.participants');
 
         Route::get('scan', [RedemptionController::class, 'scan'])->name('redemption.scan');
+
+        // 参加者カード（スマホがない子用）。カードのQRは /host/card/{合言葉}
+        Route::get('events/{event}/cards', [ParticipantCardController::class, 'index'])->name('cards.index');
+        Route::post('events/{event}/cards', [ParticipantCardController::class, 'store'])->name('cards.store');
+        Route::get('events/{event}/cards/print', [ParticipantCardController::class, 'print'])->name('cards.print');
+        Route::get('card-scan', [ParticipantCardController::class, 'scan'])->name('cards.scan');
+        Route::get('card/{card:card_token}', [ParticipantCardController::class, 'play'])->name('cards.play');
+        Route::get('card/{card:card_token}/treasure/{prize:token}', [ParticipantCardController::class, 'treasure'])->name('cards.treasure');
+        Route::post('card/{card:card_token}/treasure/{prize:token}', [ParticipantCardController::class, 'claim'])->name('cards.claim');
         Route::get('redeem/{participant:redeem_token}', [RedemptionController::class, 'lookup'])->name('redemption.lookup');
 
         Route::delete('events/{event}/prizes', [PrizeController::class, 'destroyMany'])->name('events.prizes.destroy-many');
         Route::post('events/{event}/reset-acquisitions', [EventController::class, 'resetAcquisitions'])->name('events.reset-acquisitions');
         Route::post('events/{event}/end', [EventController::class, 'end'])->name('events.end');
+        Route::post('events/{event}/trial/start', [EventTrialController::class, 'start'])->name('events.trial.start');
+        Route::post('events/{event}/trial/end', [EventTrialController::class, 'end'])->name('events.trial.end');
         Route::get('events/{event}/timer/status', [EventTimerController::class, 'status'])->name('events.timer.status');
         Route::post('events/{event}/timer/start', [EventTimerController::class, 'start'])->name('events.timer.start');
         Route::post('events/{event}/timer/extend', [EventTimerController::class, 'extend'])->name('events.timer.extend');

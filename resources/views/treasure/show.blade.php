@@ -58,7 +58,7 @@
                 <p class="mt-2 text-sm font-bold tracking-widest text-ink-soft">お宝 No.{{ $prize->number }}</p>
                 <h1 class="mt-1 text-2xl font-black">宝箱を見つけた！</h1>
                 <p class="mt-2 text-ink-soft">中身は開けてみてのお楽しみ。</p>
-                <form method="POST" action="{{ route('treasure.claim', $prize) }}" class="mt-6">
+                <form method="POST" action="{{ route('treasure.claim', $prize) }}" class="mt-6" data-wait-for-connection>
                     @csrf
                     <button type="submit" class="btn-primary w-full py-4 text-xl">開ける！</button>
                 </form>

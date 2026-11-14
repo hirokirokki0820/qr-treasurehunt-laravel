@@ -10,6 +10,13 @@
             <p class="mt-3 inline-block rounded-full bg-gold/25 px-3 py-1 text-sm font-bold">お宝は{{ $event->prizeLimitLabel() }}</p>
         @endif
 
+        @if ($event->trial_mode)
+            <p class="mt-3 rounded-xl bg-gold/25 px-3 py-2 text-sm font-bold">いまはお試しモードです（{{ \App\Models\Event::TRIAL_PARTICIPANT_LIMIT }}人まで）</p>
+        @endif
+
+        @if ($trialFull)
+            <p class="mt-6 rounded-xl bg-ruby/10 px-3 py-3 text-sm font-bold text-ruby" role="alert">お試しモードの参加人数（{{ \App\Models\Event::TRIAL_PARTICIPANT_LIMIT }}人）に達しています。本番が始まるまでお待ちください。</p>
+        @else
         <form method="POST" action="{{ route('join.store', $event) }}" class="mt-6 space-y-4 text-left">
             @csrf
             <x-errors />
@@ -19,6 +26,7 @@
             </div>
             <button type="submit" class="btn-primary w-full text-lg">参加してスタート！</button>
         </form>
+        @endif
 
         <p class="mt-5 rounded-xl bg-parchment px-3 py-2 text-left text-xs text-ink-soft">
             ゲスト参加のため、パスワードはありません。このブラウザで参加中の状態が保たれます。別のブラウザやシークレットモードでは続きができないので注意してください。

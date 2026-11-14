@@ -7,6 +7,7 @@ use App\Models\Participant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
@@ -20,7 +21,7 @@ class JoinController extends Controller
             return redirect()->route('play.index');
         }
 
-        return view('join.create', ['event' => $event]);
+        return view('join.create', ['event' => $event, 'trialFull' => $event->isTrialFull()]);
     }
 
     public function store(Request $request, Event $event): RedirectResponse
@@ -33,7 +34,16 @@ class JoinController extends Controller
             'nickname' => ['required', 'string', 'max:30'],
         ], attributes: ['nickname' => 'ニックネーム']);
 
-        $participant = $event->participants()->create($validated);
+        // お試しモードの人数は、同時に参加しても超えないよう、イベントの行をロックして数える
+        $participant = DB::transaction(function () use ($event, $validated): ?Participant {
+            $locked = Event::query()->whereKey($event->id)->lockForUpdate()->firstOrFail();
+
+            return $locked->isTrialFull() ? null : $locked->participants()->create($validated);
+        });
+
+        if ($participant === null) {
+            return back()->withInput()->withErrors(['nickname' => 'このイベントは今お試しモードで、参加できるのは'.Event::TRIAL_PARTICIPANT_LIMIT.'人までです。本番が始まるまでお待ちください。']);
+        }
 
         Auth::guard('participant')->login($participant, remember: true);
         $request->session()->regenerate();

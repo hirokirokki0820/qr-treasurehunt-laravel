@@ -20,6 +20,8 @@
         </div>
     </div>
 
+    <x-trial-mode :event="$event" />
+
     <x-event-timer :event="$event" />
 
     @php($showingRemaining = ($filters['stock'] ?? null) === 'available')
@@ -78,6 +80,7 @@
     <div class="grid grid-cols-2 gap-3">
         <a href="{{ route('events.join-qrcode', $event) }}" class="btn-secondary w-full gap-1 px-1.5 text-xs whitespace-nowrap max-[360px]:whitespace-normal sm:gap-2 sm:px-4 sm:text-base"><x-icon name="printer" class="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />参加用QRコードを印刷</a>
         <a href="{{ route('events.qrcodes', $event) }}" class="btn-secondary w-full gap-1 px-1.5 text-xs whitespace-nowrap max-[360px]:whitespace-normal sm:gap-2 sm:px-4 sm:text-base"><x-icon name="printer" class="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />お宝用QRコードを印刷</a>
+        <a href="{{ route('cards.index', $event) }}" class="btn-secondary col-span-2 w-full gap-1 px-1.5 text-xs whitespace-nowrap sm:gap-2 sm:px-4 sm:text-base"><x-icon name="qr-code" class="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />参加者カード（スマホがない子用）</a>
         @unless ($needsPrizeListPrint)
             <a href="{{ route('events.prize-list', $event) }}" class="btn-secondary col-span-2 w-full gap-1 px-1.5 text-xs whitespace-nowrap sm:gap-2 sm:px-4 sm:text-base"><x-icon name="printer" class="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />景品リストを印刷（緊急時に紙で続ける用）</a>
         @endunless

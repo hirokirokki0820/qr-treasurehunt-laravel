@@ -1,5 +1,5 @@
 <x-layouts.app title="マイページ">
-    <p class="text-sm font-bold text-ink-soft">{{ $event->name }}</p>
+    <p class="text-sm font-bold text-ink-soft">{{ $event->name }}@if ($event->trial_mode) <span class="ml-1 rounded-full bg-gold/30 px-2 py-0.5 text-xs text-ink">お試しモード</span>@endif</p>
     <h1 class="text-2xl font-black">{{ $participant->nickname }} さんのお宝</h1>
     <p class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-ink px-3 py-1 text-xs font-bold text-white">あなたの参加者ID<span class="font-black tracking-wide text-gold tabular-nums">{{ $participant->displayId() }}</span></p>
 

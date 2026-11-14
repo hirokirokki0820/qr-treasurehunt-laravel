@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
  * イベントにゲストとして参加した人。パスワードは持たず、セッションだけでログイン状態を保つ。
  */
 #[Fillable(['nickname'])]
-#[Hidden(['remember_token', 'redeem_token'])]
+#[Hidden(['remember_token', 'redeem_token', 'card_token'])]
 class Participant extends Authenticatable
 {
     /** @use HasFactory<ParticipantFactory> */
@@ -74,6 +74,14 @@ class Participant extends Authenticatable
     public function redeemAllPrizes(): int
     {
         return $this->prizes()->whereNull('redeemed_at')->update(['redeemed_at' => now()]);
+    }
+
+    /**
+     * 参加者カード（主催者が読み取る方式）で参加しているかどうか。
+     */
+    public function isCard(): bool
+    {
+        return $this->card_token !== null;
     }
 
     /**

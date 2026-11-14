@@ -1,5 +1,6 @@
 import { scrollBreadcrumbsToCurrent } from './breadcrumbs';
 import { setUpBulkSelect } from './bulk-select';
+import { setUpConnectionWatch } from './connection';
 import { setUpEnterSubmit } from './enter-submit';
 import { autoDismissFlashMessages } from './flash-message';
 import { renderQrCodes } from './qr-render';
@@ -9,6 +10,7 @@ import { limitTableRows } from './table-scroll';
 import { setUpTimers } from './timer';
 
 document.addEventListener('DOMContentLoaded', () => {
+    setUpConnectionWatch();
     renderQrCodes();
     setUpScanner();
     setUpBulkSelect();

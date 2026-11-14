@@ -37,6 +37,9 @@
                                 <td class="py-2 pr-3 font-black">{{ $loop->iteration }}</td>
                                 <td class="py-2 pr-3 font-bold break-all">
                                     {{ $participant->nickname }}
+                                    @if ($participant->isCard())
+                                        <span class="rounded-full bg-sea/15 px-2 py-0.5 text-xs font-bold text-sea">カード</span>
+                                    @endif
                                     @if ($isDuplicated)
                                         <span class="ml-1 rounded-full bg-ruby px-2 py-0.5 text-xs font-bold whitespace-nowrap text-white">同名あり</span>
                                     @endif

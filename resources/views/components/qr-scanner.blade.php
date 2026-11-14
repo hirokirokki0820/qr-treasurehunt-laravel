@@ -1,9 +1,10 @@
-@props(['accept' => 'treasure', 'startLabel' => 'カメラを起動', 'autostart' => false])
+@props(['accept' => 'treasure', 'startLabel' => 'カメラを起動', 'autostart' => false, 'rewriteTo' => null])
 
 @php
     $modes = [
         'treasure' => ['/treasure/', 'このQRコードは宝ではないようです。別のQRコードを探そう！', 'お宝を発見！宝箱へ向かいます…'],
         'join' => ['/join/', 'このQRコードは参加用ではないようです。主催者の「参加用QRコード」を読み取ってください。', '参加用QRコードを読み取りました。参加受付へ移動します…'],
+        'card' => ['/host/card/', 'このQRコードは参加者カードではないようです。子どもが持っている「参加者カード」を読み取ってください。', '参加者カードを読み取りました。お宝を読み取る画面を開きます…'],
         'redeem' => ['/host/redeem/', 'このQRコードは引き換え用ではないようです。参加者のマイページにある「引き換え用QRコード」を読み取ってください。', '引き換え用QRコードを読み取りました。参加者の獲得景品を開きます…'],
     ];
     [$acceptPath, $wrongMessage, $successMessage] = $modes[$accept] ?? $modes['treasure'];
@@ -11,7 +12,9 @@
 
 {{--
     アプリ内のQRスキャナー。accept で読み取るQRコードの種類を決める。
-    treasure: 宝のQRコード（/treasure/…）、join: 参加用QRコード（/join/…）、redeem: 参加者の引き換え用QRコード（/host/redeem/…）
+    treasure: 宝のQRコード（/treasure/…）、join: 参加用QRコード（/join/…）、redeem: 参加者の引き換え用QRコード（/host/redeem/…）、
+    card: 参加者カード（/host/card/…）
+    rewriteTo を付けると、読み取ったお宝のQRの /treasure/ をこのパスに置き換えて開く（参加者カードの子の番で、主催者が読み取るとき）。
     autostart を付けると、ページを開いた時点でカメラを起動する（失敗したときはボタンから再度起動できる）。
 --}}
 <div
@@ -20,6 +23,7 @@
     data-wrong-message="{{ $wrongMessage }}"
     data-success-message="{{ $successMessage }}"
     data-autostart="{{ $autostart ? 'true' : 'false' }}"
+    @if ($rewriteTo) data-rewrite-to="{{ $rewriteTo }}" @endif
     {{ $attributes->merge(['class' => 'card']) }}
 >
     <div id="qr-reader" class="overflow-hidden rounded-xl bg-ink/5 [&_video]:w-full"></div>

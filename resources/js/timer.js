@@ -9,6 +9,8 @@
  *   直近の問い合わせのうち、行き帰りがいちばん速かったものを使う（遅い回線のぶれを避ける）。
  * - 表示の書き換えは、残り秒数がちょうど切り替わる瞬間に合わせる。
  */
+import { reportConnection } from './connection';
+
 const POLL_INTERVAL = 5000;
 const SAMPLE_KEEP = 6;
 
@@ -113,9 +115,12 @@ export function setUpTimers() {
                     const response = await fetch(statusUrl, { headers: { Accept: 'application/json' }, cache: 'no-store' });
 
                     if (!response.ok) {
+                        reportConnection(response.status < 500);
+
                         return;
                     }
 
+                    reportConnection(true);
                     const status = await response.json();
                     sync.add(Number(status.now_ms), sentAt, Date.now());
 
@@ -132,7 +137,8 @@ export function setUpTimers() {
                         reload();
                     }
                 } catch {
-                    // 通信できないときは、次の問い合わせを待つ
+                    // 通信できないときは、次の問い合わせを待つ（続けて失敗したら「通信が切れています」を出す）
+                    reportConnection(false);
                 }
             };
 

@@ -106,10 +106,73 @@ class Event extends Model
         return DB::transaction(function (): int {
             $this->resetAcquisitions();
             // 紙の景品リストは「渡した人」を書き込んで使うので、次の回の前に印刷し直してもらう
-            $this->forceFill(['started_at' => null, 'ends_at' => null, 'prize_list_printed_at' => null])->save();
+            $this->forceFill(['started_at' => null, 'ends_at' => null, 'prize_list_printed_at' => null, 'trial_mode' => false])->save();
 
             return $this->participants()->delete();
         });
+    }
+
+    /**
+     * お試しモードで参加できる人数（参加者カードも含む）。
+     */
+    public const TRIAL_PARTICIPANT_LIMIT = 3;
+
+    /**
+     * お試しモードを始められるか。本番の参加者や記録が混ざらないよう、まだ誰も参加していないときだけ。
+     */
+    public function canStartTrial(): bool
+    {
+        return ! $this->trial_mode && ! $this->participants()->exists();
+    }
+
+    public function startTrial(): void
+    {
+        $this->forceFill(['trial_mode' => true])->save();
+    }
+
+    /**
+     * お試しを終えて本番にする。お試しの参加者・獲得の記録・タイマーを消す（景品とQR、印刷した景品リストはそのまま）。
+     */
+    public function endTrial(): void
+    {
+        DB::transaction(function (): void {
+            $this->resetAcquisitions();
+            $this->participants()->delete();
+            $this->forceFill(['started_at' => null, 'ends_at' => null, 'trial_mode' => false])->save();
+        });
+    }
+
+    /**
+     * 参加者カードを作る。お試しモード中は、参加できる人数の残りまで。作った枚数を返す。
+     *
+     * @param  list<string>  $names
+     */
+    public function createCards(array $names): int
+    {
+        return DB::transaction(function () use ($names): int {
+            $locked = static::query()->whereKey($this->id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->trial_mode) {
+                $room = max(0, self::TRIAL_PARTICIPANT_LIMIT - $locked->participants()->count());
+                $names = array_slice($names, 0, $room);
+            }
+
+            foreach ($names as $name) {
+                $card = $locked->participants()->make(['nickname' => $name]);
+                $card->card_token = Str::random(40);
+                $card->save();
+            }
+
+            return count($names);
+        });
+    }
+
+    /**
+     * お試しモードで、もう参加できる人数に達しているか。
+     */
+    public function isTrialFull(): bool
+    {
+        return $this->trial_mode && $this->participants()->count() >= self::TRIAL_PARTICIPANT_LIMIT;
     }
 
     /**
@@ -263,6 +326,7 @@ class Event extends Model
             'started_at' => 'datetime',
             'ends_at' => 'datetime',
             'prize_list_printed_at' => 'datetime',
+            'trial_mode' => 'boolean',
         ];
     }
 }

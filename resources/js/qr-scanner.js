@@ -1,3 +1,5 @@
+import { whenReachable } from './connection';
+
 /**
  * アプリ内QRスキャナー。読み取ったURLが、このサイトの data-accept-path で始まるページ
  * （宝のQRなら /treasure/、参加用QRなら /join/）なら、そのページへ移動する。
@@ -59,10 +61,21 @@ export function setUpScanner() {
             return;
         }
 
+        // 参加者カードの子の番では、お宝のQR（/treasure/合言葉）を主催者用のページ（data-rewrite-to）に置き換えて開く
+        if (root.dataset.rewriteTo) {
+            url = new URL(root.dataset.rewriteTo + url.pathname.slice(acceptPath.length), window.location.origin);
+        }
+
         handled = true;
         showMessage(successMessage, 'success');
         await stop();
-        window.location.href = url.href;
+
+        // 圏外なら、読み取ったお宝を覚えておき、つながったら自動で開く
+        await whenReachable(url.href, () => {
+            window.location.href = url.href;
+        }, () => {
+            showMessage('通信が切れています。つながったら、読み取ったQRコードの先を自動で開きます。このまま待っていてください。', 'error');
+        });
     };
 
     const start = async () => {
