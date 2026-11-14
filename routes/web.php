@@ -45,13 +45,14 @@ Route::prefix('host')->group(function () {
         Route::get('scan', [RedemptionController::class, 'scan'])->name('redemption.scan');
 
         // 参加者カード（スマホがない子用）。カードのQRは /host/card/{合言葉}
+        // お宝はカードの子の獲得景品に限らず探すので、親子の絞り込み（scoped bindings）は外し、同じイベントかはコントローラーで確かめる
         Route::get('events/{event}/cards', [ParticipantCardController::class, 'index'])->name('cards.index');
         Route::post('events/{event}/cards', [ParticipantCardController::class, 'store'])->name('cards.store');
         Route::get('events/{event}/cards/print', [ParticipantCardController::class, 'print'])->name('cards.print');
         Route::get('card-scan', [ParticipantCardController::class, 'scan'])->name('cards.scan');
         Route::get('card/{card:card_token}', [ParticipantCardController::class, 'play'])->name('cards.play');
-        Route::get('card/{card:card_token}/treasure/{prize:token}', [ParticipantCardController::class, 'treasure'])->name('cards.treasure');
-        Route::post('card/{card:card_token}/treasure/{prize:token}', [ParticipantCardController::class, 'claim'])->name('cards.claim');
+        Route::get('card/{card:card_token}/treasure/{prize:token}', [ParticipantCardController::class, 'treasure'])->withoutScopedBindings()->name('cards.treasure');
+        Route::post('card/{card:card_token}/treasure/{prize:token}', [ParticipantCardController::class, 'claim'])->withoutScopedBindings()->name('cards.claim');
         Route::get('redeem/{participant:redeem_token}', [RedemptionController::class, 'lookup'])->name('redemption.lookup');
 
         Route::delete('events/{event}/prizes', [PrizeController::class, 'destroyMany'])->name('events.prizes.destroy-many');
