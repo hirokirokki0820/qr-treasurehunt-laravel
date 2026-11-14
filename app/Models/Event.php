@@ -122,7 +122,16 @@ class Event extends Model
      */
     public function canStartTrial(): bool
     {
-        return ! $this->trial_mode && ! $this->participants()->exists();
+        return ! $this->trial_mode && ! $this->participants()->exists() && ! $this->isTimerUsed();
+    }
+
+    /**
+     * 宝探しタイマーをスタートしたあとか（動いている、または時間切れ）。
+     * このあいだはお試しモードを始めない（本番のつもりのタイマーが、お試しの中で進んだり、お試しの終わりに消えたりしないように）。
+     */
+    public function isTimerUsed(): bool
+    {
+        return $this->started_at !== null || $this->ends_at !== null;
     }
 
     public function startTrial(): void

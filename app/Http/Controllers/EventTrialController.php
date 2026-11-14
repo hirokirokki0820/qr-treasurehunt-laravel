@@ -15,6 +15,9 @@ class EventTrialController extends Controller
     {
         Gate::authorize('manage', $event);
 
+        if (! $event->trial_mode && $event->isTimerUsed()) {
+            return back()->withErrors(['trial' => '宝探しタイマーをスタートしたあとは、お試しモードを始められません。先にタイマーをリセットしてください。']);
+        }
         if (! $event->canStartTrial()) {
             return back()->withErrors(['trial' => 'お試しモードは、まだ誰も参加していないイベントで始められます。']);
         }

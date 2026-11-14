@@ -79,3 +79,24 @@ test('participants see that the event is in trial mode', function () {
     $this->post(route('join.store', $event), ['nickname' => 'たろう']);
     $this->get(route('play.index'))->assertSee('お試しモード');
 });
+
+test('trial mode cannot start while the timer is running or after it ran out', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user)->create(['time_limit_minutes' => 10]);
+    $event->startTimer();
+
+    $this->actingAs($user)->get(route('events.show', $event))
+        ->assertSee('data-trial-blocked-by-timer', false)
+        ->assertDontSee(route('events.trial.start', $event));
+    $this->post(route('events.trial.start', $event))->assertSessionHasErrors('trial');
+    expect($event->fresh()->trial_mode)->toBeFalse();
+
+    $this->travel(11)->minutes();
+    $this->post(route('events.trial.start', $event))->assertSessionHasErrors('trial');
+    expect($event->fresh()->trial_mode)->toBeFalse();
+
+    // タイマーをリセットすれば始められる
+    $event->fresh()->resetTimer();
+    $this->post(route('events.trial.start', $event))->assertRedirect();
+    expect($event->fresh()->trial_mode)->toBeTrue();
+});

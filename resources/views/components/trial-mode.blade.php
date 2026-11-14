@@ -14,6 +14,11 @@
             <button type="submit" class="btn-primary w-full gap-1.5 text-sm whitespace-nowrap"><x-icon name="play" class="h-4 w-4" />お試しを終えて本番にする</button>
         </form>
     </section>
+@elseif ($event->isTimerUsed() && ! $event->participants()->exists())
+    <section class="mt-6 rounded-2xl border-2 border-dashed border-ink/40 px-5 py-3" data-trial-blocked-by-timer>
+        <p class="font-black">本番の前に試してみる</p>
+        <p class="text-sm text-ink-soft">宝探しタイマーが動いている（または時間切れの）あいだは、お試しモードを始められません。お試しをするときは、先にタイマーをリセットしてください。</p>
+    </section>
 @elseif ($event->canStartTrial())
     <section class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-ink/40 px-5 py-3">
         <div>
