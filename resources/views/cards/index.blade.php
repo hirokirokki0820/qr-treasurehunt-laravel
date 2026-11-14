@@ -39,10 +39,25 @@
         @if ($cards->isEmpty())
             <p class="mt-4 py-4 text-center text-ink-soft">まだカードはありません。</p>
         @else
+            <form id="card-delete-form" method="POST" action="{{ route('cards.destroy-many', $event) }}" class="mt-3 flex flex-wrap items-center justify-between gap-3" data-confirm="選んだ参加者カードを削除します。その子が獲得していた景品は在庫に戻ります（元に戻せません）。よろしいですか？">
+                @csrf
+                @method('DELETE')
+                <label class="flex items-center gap-2 text-sm font-bold">
+                    <input type="checkbox" class="h-4 w-4 accent-ruby" data-bulk-select-all>
+                    すべて選ぶ
+                </label>
+                <button type="submit" class="btn-danger gap-1.5 px-4 py-2 text-sm" data-bulk-delete-button disabled>
+                    <x-icon name="trash" class="h-4 w-4" />
+                    <span>選んだカードを削除<span data-bulk-delete-count></span></span>
+                </button>
+            </form>
             <ul class="mt-3 divide-y divide-ink/15 text-sm">
                 @foreach ($cards as $card)
-                    <li class="flex items-center justify-between gap-3 py-2">
-                        <span class="font-bold">{{ $card->nickname }} <span class="text-xs font-normal text-ink-soft">{{ $card->displayId() }}</span></span>
+                    <li class="flex items-center justify-between gap-3 py-2 has-[:checked]:bg-ruby/5">
+                        <label class="flex items-center gap-2.5 font-bold">
+                            <input type="checkbox" name="card_ids[]" value="{{ $card->id }}" form="card-delete-form" class="h-4 w-4 accent-ruby" data-bulk-select-item aria-label="{{ $card->nickname }} を選ぶ">
+                            <span>{{ $card->nickname }} <span class="text-xs font-normal text-ink-soft">{{ $card->displayId() }}</span></span>
+                        </label>
                         <span class="flex items-center gap-3">
                             <span class="text-ink-soft">獲得 {{ $card->prizes_count }}個</span>
                             <a href="{{ route('cards.play', $card->card_token) }}" class="font-bold text-sea underline">この子の番にする</a>

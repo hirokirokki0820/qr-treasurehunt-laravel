@@ -73,6 +73,25 @@ class ParticipantCardController extends Controller
         return back()->with('status', "参加者カードを{$created}枚作りました。印刷して配ってください。");
     }
 
+    /**
+     * 選んだ参加者カードを削除する。その子が獲得していた景品は在庫に戻る。
+     */
+    public function destroyMany(Request $request, Event $event): RedirectResponse
+    {
+        Gate::authorize('manage', $event);
+
+        $ids = $request->validate([
+            'card_ids' => ['required', 'array', 'max:500'],
+            'card_ids.*' => ['integer'],
+        ], ['card_ids.required' => '削除するカードを選んでください。'])['card_ids'];
+
+        // このイベントの参加者カードだけを消す（自分のスマホで参加した人は消さない）
+        $cards = $event->participants()->whereNotNull('card_token')->whereIn('id', $ids)->get();
+        $cards->each->delete();
+
+        return back()->with('status', "参加者カードを{$cards->count()}枚削除しました。獲得していた景品は在庫に戻りました。");
+    }
+
     public function print(Request $request, Event $event): View
     {
         Gate::authorize('manage', $event);

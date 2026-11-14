@@ -48,6 +48,7 @@ Route::prefix('host')->group(function () {
         // お宝はカードの子の獲得景品に限らず探すので、親子の絞り込み（scoped bindings）は外し、同じイベントかはコントローラーで確かめる
         Route::get('events/{event}/cards', [ParticipantCardController::class, 'index'])->name('cards.index');
         Route::post('events/{event}/cards', [ParticipantCardController::class, 'store'])->name('cards.store');
+        Route::delete('events/{event}/cards', [ParticipantCardController::class, 'destroyMany'])->name('cards.destroy-many');
         Route::get('events/{event}/cards/print', [ParticipantCardController::class, 'print'])->name('cards.print');
         Route::get('card-scan', [ParticipantCardController::class, 'scan'])->name('cards.scan');
         Route::get('card/{card:card_token}', [ParticipantCardController::class, 'play'])->name('cards.play');

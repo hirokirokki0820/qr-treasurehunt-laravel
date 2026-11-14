@@ -152,3 +152,38 @@ test('the camera pages lead back to the event they were opened from', function (
     $this->get(route('redemption.scan', ['event' => $foreign->id]))->assertOk()->assertDontSee('よその会');
     $this->get(route('cards.scan', ['event' => $foreign->id]))->assertOk()->assertDontSee('よその会');
 });
+
+test('organizers delete chosen cards and their prizes go back to stock', function () {
+    [$user, $event] = cardEvent();
+    $event->createCards(['たろう', 'はなこ']);
+    [$taro, $hanako] = $event->participants()->orderBy('id')->get()->all();
+    $phonePlayer = Participant::factory()->for($event)->create();
+    $prize = Prize::factory()->takenBy($taro)->create();
+
+    $this->actingAs($user)->get(route('cards.index', $event))->assertSee('選んだカードを削除');
+
+    $this->delete(route('cards.destroy-many', $event), ['card_ids' => [$taro->id, $phonePlayer->id]])
+        ->assertSessionHas('status');
+
+    expect(Participant::find($taro->id))->toBeNull()
+        ->and(Participant::find($hanako->id))->not->toBeNull()
+        ->and(Participant::find($phonePlayer->id))->not->toBeNull()
+        ->and($prize->fresh()->participant_id)->toBeNull();
+
+    $this->get(route('cards.play', $taro->card_token))->assertNotFound();
+});
+
+test('cards of another event or organizer cannot be deleted', function () {
+    [, $event] = cardEvent();
+    $event->createCards(['たろう']);
+    $card = $event->participants()->sole();
+
+    $this->actingAs(User::factory()->create())
+        ->delete(route('cards.destroy-many', $event), ['card_ids' => [$card->id]])
+        ->assertForbidden();
+
+    [$otherUser, $otherEvent] = cardEvent();
+    $this->actingAs($otherUser)->delete(route('cards.destroy-many', $otherEvent), ['card_ids' => [$card->id]]);
+
+    expect(Participant::find($card->id))->not->toBeNull();
+});
