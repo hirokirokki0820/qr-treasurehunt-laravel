@@ -118,6 +118,12 @@ class PrizeController extends Controller
                 'param' => 'remaining',
             ];
         }
+        if ($back === 'unredeemed') {
+            return [
+                'url' => route('events.show', [$event, 'stock' => 'unredeemed']).'#prize-list',
+                'param' => 'unredeemed',
+            ];
+        }
 
         return [
             'url' => route('events.show', $event).'#prize-list',

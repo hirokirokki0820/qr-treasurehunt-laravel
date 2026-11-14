@@ -79,7 +79,7 @@ class EventController extends Controller
         Gate::authorize('manage', $event);
 
         $filters = $request->validate([
-            'stock' => ['nullable', 'in:available'],
+            'stock' => ['nullable', 'in:available,unredeemed'],
         ]);
 
         $prizes = $event->prizes()
@@ -91,6 +91,8 @@ class EventController extends Controller
         $event->loadCount([
             'prizes as winning_prizes_count' => fn ($query) => $query->where('is_miss', false),
             'prizes as remaining_prizes_count' => fn ($query) => $query->where('is_miss', false)->whereNull('participant_id'),
+            'prizes',
+            'prizes as unredeemed_prizes_count' => fn ($query) => $query->where('is_miss', false)->whereNotNull('participant_id')->whereNull('redeemed_at'),
             'participants',
         ]);
 
@@ -177,7 +179,7 @@ class EventController extends Controller
         $loggedOutCount = $event->end();
 
         return redirect()->route('events.show', $event)
-            ->with('status', "イベントを終了しました。参加者{$loggedOutCount}人をログアウトさせ、景品の獲得状況をリセットしました。");
+            ->with('status', "イベントを片付けました。参加者{$loggedOutCount}人の記録を消し、景品をすべて未獲得に戻しました。景品とQRコードは、次の回にそのまま使えます。");
     }
 
     /**
@@ -189,7 +191,7 @@ class EventController extends Controller
 
         $resetCount = $event->resetAcquisitions();
 
-        return redirect()->route('events.show', $event)->with('status', "景品の獲得状況をリセットしました（{$resetCount}件）。");
+        return redirect()->route('events.show', $event)->with('status', "景品の獲得記録をリセットしました（{$resetCount}件を未獲得に戻しました）。参加者とタイマーはそのままです。");
     }
 
     /**

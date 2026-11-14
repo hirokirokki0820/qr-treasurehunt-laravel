@@ -232,6 +232,27 @@ class Event extends Model
     }
 
     /**
+     * 主催者の画面で、どの操作を先に見せるかを決めるための、イベントの段階。
+     *   trial  … お試しモード中
+     *   prep   … 準備中（まだ誰も参加していなくて、タイマーも動かしていない）
+     *   live   … 開催中（タイマーが動いている、または参加者がいる）
+     *   closed … 宝探しの締切後（タイマーが終わった。ここからは景品の引き換え）
+     * 状態を新しく持つのではなく、今ある trial_mode・タイマー・参加者の数から決める。
+     */
+    public function phase(): string
+    {
+        if ($this->trial_mode) {
+            return 'trial';
+        }
+
+        return match ($this->timerState()) {
+            TimerState::Ended => 'closed',
+            TimerState::Running => 'live',
+            default => ($this->participants_count ?? $this->participants()->count()) > 0 ? 'live' : 'prep',
+        };
+    }
+
+    /**
      * 宝探しタイマーの今の状態。
      */
     public function timerState(): TimerState

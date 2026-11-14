@@ -14,14 +14,14 @@ test('the event page asks the organizer to print the prize list until it is open
         ->assertOk()
         ->assertSee('data-prize-list-reminder', false)
         ->assertSee('当日の備えに、景品リストを印刷しておきましょう')
-        ->assertDontSee('景品リストを印刷（緊急時に紙で続ける用）');
+        ->assertSee('data-prize-list-print-button', false);
 
     $this->get(route('events.prize-list', $event))->assertOk();
 
     expect($event->fresh()->prize_list_printed_at)->not->toBeNull();
     $this->get(route('events.show', $event))
         ->assertDontSee('data-prize-list-reminder', false)
-        ->assertSee('景品リストを印刷（緊急時に紙で続ける用）');
+        ->assertSee('data-prize-list-print-button', false);
 });
 
 test('an event without prizes does not ask for the prize list yet', function () {

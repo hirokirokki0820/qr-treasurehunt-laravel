@@ -107,11 +107,25 @@ class Prize extends Model
     protected function search(Builder $query, array $filters): void
     {
         $query->when(($filters['stock'] ?? null) === 'available', fn (Builder $q) => $q->where('is_miss', false)->whereNull('participant_id'));
+        $query->when(($filters['stock'] ?? null) === 'unredeemed', fn (Builder $q) => $q->where('is_miss', false)->whereNotNull('participant_id')->whereNull('redeemed_at'));
     }
 
     /**
      * 参加者が受付で景品と交換済みかどうか。
      */
+    /**
+     * 一覧に出す状態の名前。ハズレは在庫の対象外。当たりは、未獲得 → 引き換え待ち（見つけた人がいる）→ 引き換え済み。
+     */
+    public function statusLabel(): string
+    {
+        return match (true) {
+            $this->is_miss => '対象外',
+            $this->participant_id === null => '未獲得',
+            $this->redeemed_at === null => '引き換え待ち',
+            default => '引き換え済み',
+        };
+    }
+
     public function isRedeemed(): bool
     {
         return $this->redeemed_at !== null;

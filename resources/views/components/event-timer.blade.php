@@ -35,38 +35,33 @@
                 <p class="text-sm text-ink-soft">{{ $event->started_at->format('H:i') }} スタート ・ <span data-timer-ends>{{ $event->ends_at->format('H:i') }}</span> 終了予定</p>
             </div>
             <div class="flex flex-wrap gap-2 max-sm:w-full">
-                <form method="POST" action="{{ route('events.timer.reset', $event) }}" class="flex-1" data-confirm="タイマーをスタート前に戻します。参加者の画面も「まもなく宝探しスタート！」に戻り、宝箱を開けられなくなります（獲得済みの景品はそのまま残ります）。よろしいですか？" data-timer-reset>
-                    @csrf
-                    <button type="submit" class="btn-secondary w-full gap-1.5 text-sm whitespace-nowrap"><x-icon name="reset" class="h-4 w-4" />タイマーをリセット</button>
-                </form>
                 <form method="POST" action="{{ route('events.timer.extend', $event) }}" class="flex-1">
                     @csrf
-                    <button type="submit" class="btn-secondary w-full text-sm whitespace-nowrap">＋{{ \App\Http\Controllers\EventTimerController::EXTEND_MINUTES }}分延長</button>
+                    <button type="submit" class="btn-secondary min-h-11 w-full text-sm whitespace-nowrap">＋{{ \App\Http\Controllers\EventTimerController::EXTEND_MINUTES }}分延長</button>
                 </form>
-                <form method="POST" action="{{ route('events.timer.stop', $event) }}" class="flex-1" data-confirm="宝探しを今すぐ締め切ります。参加者は宝箱を開けられなくなります。よろしいですか？">
+                <form method="POST" action="{{ route('events.timer.stop', $event) }}" class="flex-1" data-confirm="宝探しを締め切ります。参加者は宝箱を開けられなくなります。獲得の記録は消えず、景品の引き換えはこのあとも続けられます。よろしいですか？">
                     @csrf
-                    <button type="submit" class="btn-danger w-full text-sm whitespace-nowrap">今すぐ締め切る</button>
+                    <button type="submit" class="btn-danger min-h-11 w-full text-sm whitespace-nowrap">宝探しを締め切る</button>
                 </form>
             </div>
         </div>
+        <p class="mt-2 text-xs text-ink-soft">締め切ると、宝箱は開けられなくなります。景品の引き換えはそのあとも続けられます。</p>
         <div class="mt-3 h-2.5 overflow-hidden rounded-full bg-ink/10"><div class="h-full rounded-full bg-sea transition-[width] duration-1000 ease-linear" style="width: {{ round($remaining / $total * 100, 1) }}%" data-timer-bar></div></div>
+        <x-timer-reset :event="$event" />
     </section>
 @elseif ($state === TimerState::Ended)
     <section class="card mt-6 flex flex-wrap items-center justify-between gap-4 py-4">
         <div>
-            <p class="inline-flex items-center gap-1.5 rounded-full bg-ink px-2.5 py-0.5 text-xs font-bold text-white">終了</p>
-            <p class="mt-1 text-lg font-black">宝探しは終了しました</p>
+            <p class="inline-flex items-center gap-1.5 rounded-full bg-ink px-2.5 py-0.5 text-xs font-bold text-white">締切</p>
+            <p class="mt-1 text-lg font-black">宝探しは締め切りました</p>
             <p class="text-sm text-ink-soft">{{ $event->started_at?->format('H:i') }}〜{{ $event->ends_at->format('H:i') }} ・ ここからは受付で景品の引き換えです</p>
         </div>
         <div class="flex flex-wrap gap-2 max-sm:w-full">
-            <form method="POST" action="{{ route('events.timer.reset', $event) }}" class="flex-1" data-confirm="タイマーをスタート前に戻します。参加者の画面も「まもなく宝探しスタート！」に戻り、宝箱を開けられなくなります（獲得済みの景品はそのまま残ります）。よろしいですか？" data-timer-reset>
-                @csrf
-                <button type="submit" class="btn-secondary w-full gap-1.5 text-sm whitespace-nowrap"><x-icon name="reset" class="h-4 w-4" />タイマーをリセット</button>
-            </form>
             <form method="POST" action="{{ route('events.timer.start', $event) }}" class="flex-1" data-confirm="宝探しをもう一度スタートします（制限時間 {{ $event->time_limit_minutes }}分）。獲得済みの景品はそのまま残ります。よろしいですか？">
                 @csrf
-                <button type="submit" class="btn-secondary w-full gap-1.5 text-sm whitespace-nowrap"><x-icon name="play" class="h-4 w-4" />もう一度スタート</button>
+                <button type="submit" class="btn-secondary min-h-11 w-full gap-1.5 text-sm whitespace-nowrap"><x-icon name="play" class="h-4 w-4" />もう一度スタート</button>
             </form>
         </div>
+        <div class="w-full"><x-timer-reset :event="$event" /></div>
     </section>
 @endif

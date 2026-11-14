@@ -74,3 +74,64 @@
         display: none !important;
     }
 }
+
+/*
+ * イベントページの景品一覧。PC（640px以上）は表、スマホはカード。
+ * スマホのカード：1行目「No. 景品名 [詳細]」、2行目「種類・状態」、3行目「獲得者」。景品名が長くても、詳細や状態は押し出されない。
+ */
+@media (width < 40rem) {
+    .prize-table,
+    .prize-table tbody {
+        display: block;
+    }
+
+    .prize-table thead {
+        display: none;
+    }
+
+    .prize-row {
+        display: grid;
+        grid-template-columns: auto auto minmax(0, 1fr) auto;
+        grid-template-areas:
+            'chk num  name detail'
+            'chk .    meta detail'
+            'chk .    who  who';
+        align-items: center;
+        row-gap: 0.25rem;
+        padding: 0.75rem 0;
+    }
+
+    .prize-row > td {
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    .prize-cell-chk {
+        grid-area: chk;
+        align-self: start;
+    }
+
+    .prize-cell-num {
+        grid-area: num;
+        align-self: start;
+        white-space: nowrap;
+    }
+
+    .prize-cell-name {
+        grid-area: name;
+    }
+
+    .prize-cell-meta {
+        grid-area: meta;
+    }
+
+    .prize-cell-who {
+        grid-area: who;
+    }
+
+    .prize-cell-detail {
+        grid-area: detail;
+        align-self: start;
+        padding-left: 0.5rem;
+    }
+}

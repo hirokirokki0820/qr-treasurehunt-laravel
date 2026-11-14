@@ -79,7 +79,7 @@ test('organizers can extend and stop a running hunt, then start it again', funct
     $this->post(route('events.timer.start', $event));
     expect($event->fresh()->timerState())->toBe(TimerState::Running);
 
-    $this->get(route('events.show', $event))->assertSee('宝探し中')->assertSee('今すぐ締め切る');
+    $this->get(route('events.show', $event))->assertSee('宝探し中')->assertSee('宝探しを締め切る');
 });
 
 test('other organizers cannot control the timer', function () {
@@ -174,7 +174,7 @@ test('organizers can reset a started or ended timer back to waiting, and partici
     $event->startTimer();
     $event->stopTimer();
     $this->actingAs($organizer)->get(route('events.show', $event))
-        ->assertSeeInOrder(['タイマーをリセット', 'もう一度スタート']);
+        ->assertSeeInOrder(['もう一度スタート', 'タイマーをリセット']);
     $this->post(route('events.timer.reset', $event));
     expect($event->fresh()->timerState())->toBe(TimerState::Waiting);
 });

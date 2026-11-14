@@ -165,7 +165,7 @@ test('resetting acquisitions puts every prize back in stock', function () {
     $this->actingAs($user)
         ->post(route('events.reset-acquisitions', $event))
         ->assertRedirect(route('events.show', $event))
-        ->assertSessionHas('status', '景品の獲得状況をリセットしました（2件）。');
+        ->assertSessionHas('status', '景品の獲得記録をリセットしました（2件を未獲得に戻しました）。参加者とタイマーはそのままです。');
 
     expect($event->prizes()->whereNotNull('participant_id')->count())->toBe(0)
         ->and($event->prizes()->whereNotNull('acquired_at')->count())->toBe(0)
@@ -329,7 +329,7 @@ test('the event page counts the remaining winning prizes, excluding misses', fun
     expect($response->viewData('event'))
         ->winning_prizes_count->toBe(4)
         ->remaining_prizes_count->toBe(3);
-    $response->assertSeeInOrder(['残り', '3']);
+    $response->assertSeeInOrder(['まだ見つかっていない', '3']);
 });
 
 test('the event list shows the remaining winning prizes for each event', function () {
@@ -365,7 +365,7 @@ test('misses are left out of the stock column and the stock filters', function (
 
     $this->get(route('events.show', $event))
         ->assertSee('ハズレ景品')
-        ->assertSee('title="ハズレは在庫の対象外です"', false);
+        ->assertSee('title="ハズレは在庫の対象外です">対象外</span>', false);
 });
 
 test('ending an event logs every participant out and resets the prizes', function () {
@@ -378,7 +378,7 @@ test('ending an event logs every participant out and resets the prizes', functio
     $this->actingAs($user)
         ->post(route('events.end', $event))
         ->assertRedirect(route('events.show', $event))
-        ->assertSessionHas('status', 'イベントを終了しました。参加者2人をログアウトさせ、景品の獲得状況をリセットしました。');
+        ->assertSessionHas('status', 'イベントを片付けました。参加者2人の記録を消し、景品をすべて未獲得に戻しました。景品とQRコードは、次の回にそのまま使えます。');
 
     expect($event->participants()->count())->toBe(0)
         ->and($prize->fresh())
@@ -656,8 +656,10 @@ test('the prize list marks won prizes as redeemed or not yet redeemed', function
 
     $this->actingAs($organizer)
         ->get(route('events.show', $event))
-        ->assertSee('>引換済</span>', false)
-        ->assertSee('title="まだ景品を引き換えていません">未</span>', false);
+        ->assertSee('data-prize-status="引き換え済み"', false)
+        ->assertSee('data-prize-status="引き換え待ち"', false)
+        ->assertSee('>引き換え済み</span>', false)
+        ->assertSee('>引き換え待ち</span>', false);
 });
 
 test('turning a prize into a miss while editing also renames it to ハズレ', function () {
@@ -684,4 +686,56 @@ test('the qr code print pages recommend printing with chrome', function () {
             ->get(route($page, $event))
             ->assertSee('印刷は Google Chrome がおすすめです。');
     }
+});
+
+test('the event page puts the day-of operations first once the event is running', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user)->create(['time_limit_minutes' => 30]);
+    Prize::factory()->for($event)->create(['name' => 'とても長い名前の景品・お菓子の詰め合わせ（大袋）']);
+
+    $this->actingAs($user);
+
+    // 準備中：準備の操作が開いていて、引き換えのボタンはまだ出さない
+    $this->get(route('events.show', $event))
+        ->assertSee('data-phase="prep"', false)
+        ->assertSee('data-setup open', false)
+        ->assertDontSee('data-redeem-bar', false)
+        ->assertSeeInOrder(['data-setup', '宝探しスタート', '景品一覧']);
+
+    // 開催中：残り時間 → 引き換え → 景品一覧 → たたんだ準備・設定
+    $event->startTimer();
+    $this->get(route('events.show', $event))
+        ->assertSee('data-phase="live"', false)
+        ->assertSee('data-redeem-bar', false)
+        ->assertDontSee('data-setup open', false)
+        ->assertSeeInOrder(['残り', 'data-redeem-button', '景品一覧', 'data-setup', 'data-danger-zone'])
+        ->assertDontSee('本番の前に試してみる');
+
+    // 締切後：引き換えのボタンはそのまま
+    $event->stopTimer();
+    $this->get(route('events.show', $event))
+        ->assertSee('data-phase="closed"', false)
+        ->assertSee('宝探しは締め切りました')
+        ->assertSee('data-redeem-bar', false);
+});
+
+test('prizes can be filtered by those waiting to be handed over', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user)->create();
+    $participant = Participant::factory()->for($event)->create();
+    Prize::factory()->for($event)->create(['name' => 'まだの景品']);
+    Prize::factory()->for($event)->takenBy($participant)->create(['name' => '待っている景品']);
+    $done = Prize::factory()->for($event)->takenBy($participant)->create(['name' => '渡した景品']);
+    $done->forceFill(['redeemed_at' => now()])->save();
+
+    $this->actingAs($user)->get(route('events.show', [$event, 'stock' => 'unredeemed']))
+        ->assertOk()
+        ->assertSee('待っている景品')
+        ->assertDontSee('まだの景品')
+        ->assertDontSee('渡した景品')
+        ->assertSee('aria-current="true"', false);
+
+    $prize = Prize::where('name', '待っている景品')->sole();
+    $this->get(route('events.prizes.show', [$event, $prize, 'back' => 'unredeemed']))
+        ->assertSee(e(route('events.show', [$event, 'stock' => 'unredeemed'])).'#prize-list', false);
 });
