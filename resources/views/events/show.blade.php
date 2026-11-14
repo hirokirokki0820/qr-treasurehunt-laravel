@@ -40,11 +40,14 @@
     @else
         {{-- 準備中・お試し中：景品の登録 → 印刷 → お試し → 本番のスタート の順 --}}
         <x-plan-limit :event="$event" />
-        <x-trial-mode :event="$event" />
         @if ($phase === 'trial')
+            <x-trial-mode :event="$event" />
             @include('events.show.redeem-button')
         @endif
         @include('events.show.setup', ['open' => true])
+        @if ($phase === 'prep')
+            <x-trial-mode :event="$event" />
+        @endif
         <x-event-timer :event="$event" />
         @if (! $event->hasTimeLimit())
             <p class="mt-6 rounded-xl bg-white/70 px-4 py-3 text-sm text-ink-soft">制限時間なしのイベントです。参加用QRから参加した人から、すぐに宝探しを始められます。</p>

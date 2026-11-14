@@ -111,8 +111,13 @@
                             </span>
                         </td>
                         <td class="prize-cell-who py-2 pr-3">
-                            <span class="text-xs font-bold text-ink-soft sm:hidden">獲得者：</span>
-                            @if ($prize->participant)
+                            @if ($prize->is_miss)
+                                <span class="text-sm text-ink-soft max-sm:hidden">—</span>
+                            @else
+                                <span class="text-xs font-bold text-ink-soft sm:hidden">獲得者：</span>
+                            @endif
+                            @if ($prize->is_miss)
+                            @elseif ($prize->participant)
                                 <a href="{{ route('events.participants.show', [$event, $prize->participant]) }}" class="font-bold text-sea underline decoration-sea/40 underline-offset-2 hover:decoration-sea group-data-selecting/select:pointer-events-none group-data-selecting/select:no-underline" title="{{ $prize->participant->nickname }} さんの獲得景品を見る">{{ $prize->participant->nickname }}</a>
                                 @if (in_array($prize->participant->nickname, $duplicatedNicknames, true))
                                     <span class="rounded bg-ruby/10 px-1 text-xs font-bold text-ruby" title="同じニックネームの参加者がいます">{{ $prize->participant->displayId() }}</span>
