@@ -105,10 +105,32 @@ class Event extends Model
     {
         return DB::transaction(function (): int {
             $this->resetAcquisitions();
-            $this->forceFill(['started_at' => null, 'ends_at' => null])->save();
+            // 紙の景品リストは「渡した人」を書き込んで使うので、次の回の前に印刷し直してもらう
+            $this->forceFill(['started_at' => null, 'ends_at' => null, 'prize_list_printed_at' => null])->save();
 
             return $this->participants()->delete();
         });
+    }
+
+    /**
+     * 緊急時に紙で続けるための景品リストを、印刷し(直し)てもらう必要があるかどうか。
+     * 景品があるのにまだ印刷ページを開いていないとき、または開いたあとに景品を足したときに true。
+     */
+    public function needsPrizeListPrint(): bool
+    {
+        if ($this->prize_list_printed_at === null) {
+            return $this->prizes()->exists();
+        }
+
+        return $this->prizes()->where('created_at', '>', $this->prize_list_printed_at)->exists();
+    }
+
+    /**
+     * 景品リストの印刷ページを開いたことを記録する。
+     */
+    public function markPrizeListPrinted(): void
+    {
+        $this->forceFill(['prize_list_printed_at' => now()])->save();
     }
 
     /**
@@ -226,6 +248,7 @@ class Event extends Model
             'time_limit_minutes' => 'integer',
             'started_at' => 'datetime',
             'ends_at' => 'datetime',
+            'prize_list_printed_at' => 'datetime',
         ];
     }
 }

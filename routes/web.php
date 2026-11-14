@@ -37,6 +37,7 @@ Route::prefix('host')->group(function () {
         Route::resource('events', EventController::class);
         Route::get('events/{event}/qrcodes', [EventController::class, 'qrCodes'])->name('events.qrcodes');
         Route::get('events/{event}/join-qrcode', [EventController::class, 'joinQrCode'])->name('events.join-qrcode');
+        Route::get('events/{event}/prize-list', [EventController::class, 'prizeList'])->name('events.prize-list');
         Route::get('events/{event}/participants', [EventController::class, 'participants'])->name('events.participants');
 
         Route::get('scan', [RedemptionController::class, 'scan'])->name('redemption.scan');

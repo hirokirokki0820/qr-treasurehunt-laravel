@@ -63,9 +63,20 @@
 
     <a href="{{ route('redemption.scan') }}" class="btn-primary mb-3 w-full gap-2 py-3"><x-icon name="camera" class="h-5 w-5 shrink-0" />引き換えQRを読み取る</a>
 
+    @if ($event->needsPrizeListPrint())
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-ink bg-gold/25 px-4 py-3 text-sm" role="note" data-prize-list-reminder>
+            <div>
+                <p class="font-black">{{ $event->prize_list_printed_at ? '景品を足したので、景品リストを印刷し直しましょう' : '当日の備えに、景品リストを印刷しておきましょう' }}</p>
+                <p class="mt-0.5 text-ink-soft">会場の回線やサーバーの不具合で全員がつながらなくなっても、紙のリストがあればイベントを続けられます。<a href="{{ rtrim(config('services.kobapp.url'), '/') }}/help/qr-takarasagashi/trouble#emergency" class="font-bold text-sea underline" target="_blank" rel="noopener">紙で続ける方法</a></p>
+            </div>
+            <a href="{{ route('events.prize-list', $event) }}" class="btn-primary shrink-0 gap-1.5 text-sm"><x-icon name="printer" class="h-4 w-4 shrink-0" />景品リストを印刷</a>
+        </div>
+    @endif
+
     <div class="grid grid-cols-2 gap-3">
         <a href="{{ route('events.join-qrcode', $event) }}" class="btn-secondary w-full gap-1 px-1.5 text-xs whitespace-nowrap max-[360px]:whitespace-normal sm:gap-2 sm:px-4 sm:text-base"><x-icon name="printer" class="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />参加用QRコードを印刷</a>
         <a href="{{ route('events.qrcodes', $event) }}" class="btn-secondary w-full gap-1 px-1.5 text-xs whitespace-nowrap max-[360px]:whitespace-normal sm:gap-2 sm:px-4 sm:text-base"><x-icon name="printer" class="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />お宝用QRコードを印刷</a>
+        <a href="{{ route('events.prize-list', $event) }}" class="btn-secondary col-span-2 w-full gap-1 px-1.5 text-xs whitespace-nowrap sm:gap-2 sm:px-4 sm:text-base"><x-icon name="printer" class="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />景品リストを印刷（緊急時に紙で続ける用）</a>
     </div>
 
     <section id="prize-list" class="card mt-8 scroll-mt-4">

@@ -208,6 +208,22 @@ class EventController extends Controller
     }
 
     /**
+     * 緊急時（全員つながらないとき）に紙で続けるための景品リストを、印刷用に表示する。
+     * 開いた時刻を記録し、イベントのページの「印刷しておきましょう」のお知らせを消す。
+     */
+    public function prizeList(Event $event): View
+    {
+        Gate::authorize('manage', $event);
+
+        $event->markPrizeListPrinted();
+
+        return view('events.prize-list', [
+            'event' => $event,
+            'prizes' => $event->prizes()->with('participant')->orderBy('number')->get(),
+        ]);
+    }
+
+    /**
      * 参加者がゲストログインするためのQRコードを表示する。
      */
     public function joinQrCode(Request $request, Event $event): View
