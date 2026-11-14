@@ -698,7 +698,7 @@ test('the event page puts the day-of operations first once the event is running'
     // 準備中：準備の操作が開いていて、引き換えのボタンはまだ出さない
     $this->get(route('events.show', $event))
         ->assertSee('data-phase="prep"', false)
-        ->assertSee('data-setup open', false)
+        ->assertSee('data-setup-open="yes"', false)
         ->assertDontSee('data-redeem-bar', false)
         ->assertSeeInOrder(['data-setup', '宝探しスタート', '景品一覧']);
 
@@ -707,7 +707,7 @@ test('the event page puts the day-of operations first once the event is running'
     $this->get(route('events.show', $event))
         ->assertSee('data-phase="live"', false)
         ->assertSee('data-redeem-bar', false)
-        ->assertDontSee('data-setup open', false)
+        ->assertSee('data-setup-open="no"', false)
         ->assertSeeInOrder(['残り', 'data-redeem-button', '景品一覧', 'data-setup', 'data-danger-zone'])
         ->assertDontSee('本番の前に試してみる');
 

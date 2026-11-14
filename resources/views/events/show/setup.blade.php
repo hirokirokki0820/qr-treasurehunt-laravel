@@ -4,7 +4,7 @@
 @endphp
 
 {{-- 準備・設定（印刷・景品の追加・編集など）。準備中は開いて、当日はたたんで下に置く --}}
-<details class="card mt-6 p-0 [&_summary::-webkit-details-marker]:hidden" @if ($open) open @endif data-setup>
+<details class="card mt-6 p-0 [&_summary::-webkit-details-marker]:hidden" @if ($open) open @endif data-setup data-setup-open="{{ $open ? 'yes' : 'no' }}">
     <summary class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-5 py-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sea">
         <span>
             <span class="block text-lg font-black">{{ $open ? '準備' : '準備・設定' }}</span>
