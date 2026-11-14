@@ -42,7 +42,8 @@ test('monitors can let up to one hundred people join', function () {
 });
 
 test('admins have no limit except in trial mode', function () {
-    $owner = User::factory()->create(['plan' => 'admin']);
+    $owner = User::factory()->create();
+    expect($owner->fresh()->plan)->toBe('admin');
     $event = Event::factory()->for($owner)->create();
     Participant::factory()->count(User::MONITOR_PARTICIPANT_LIMIT)->for($event)->create();
 
