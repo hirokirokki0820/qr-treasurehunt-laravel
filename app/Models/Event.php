@@ -211,7 +211,10 @@ class Event extends Model
      *
      * 宝探し中の延長では状態（state）が変わらないので、画面は再読み込みせずに残り時間と終了時刻だけを差し替える。
      *
-     * @return array{state: string, remaining: int|null, total: int|null, ends: string|null, version: string}
+     * 端末どうしで表示をそろえるため、終了時刻（ends_ms）とサーバーの今の時刻（now_ms）をミリ秒で返す。
+     * 画面はこの2つと、問い合わせにかかった時間から、端末の時計とのずれを見積もって数える。
+     *
+     * @return array{state: string, remaining: int|null, total: int|null, ends: string|null, ends_ms: int|null, now_ms: int, version: string}
      */
     public function timerStatus(): array
     {
@@ -222,6 +225,8 @@ class Event extends Model
             'remaining' => $this->remainingSeconds(),
             'total' => $this->started_at && $this->ends_at ? max(1, (int) $this->started_at->diffInSeconds($this->ends_at)) : null,
             'ends' => $this->ends_at?->format('H:i'),
+            'ends_ms' => $state === TimerState::Running ? $this->ends_at->getTimestampMs() : null,
+            'now_ms' => now()->getTimestampMs(),
             'version' => $state->value.':'.($this->ends_at?->getTimestamp() ?? 0),
         ];
     }

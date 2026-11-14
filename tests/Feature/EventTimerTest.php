@@ -191,3 +191,35 @@ test('the timer reset is only for the organizer of a timed event', function () {
     $untimed = Event::factory()->create(['time_limit_minutes' => null]);
     $this->actingAs($untimed->user)->post(route('events.timer.reset', $untimed))->assertStatus(409);
 });
+
+test('the timer status gives the end and server time in milliseconds so every screen counts alike', function () {
+    [$organizer, $event, $participant] = timedEvent();
+    $this->freezeTime();
+    $event->startTimer();
+    $event->refresh();
+
+    $expected = [
+        'state' => 'running',
+        'ends_ms' => $event->ends_at->getTimestampMs(),
+        'now_ms' => now()->getTimestampMs(),
+    ];
+
+    $this->actingAs($participant, 'participant')->getJson(route('play.status'))->assertJson($expected);
+    $this->actingAs($organizer)->getJson(route('events.timer.status', $event))->assertJson($expected);
+
+    $this->get(route('events.show', $event))
+        ->assertSee('data-status-url="'.route('events.timer.status', $event).'"', false)
+        ->assertSee('data-ends-ms="'.$expected['ends_ms'].'"', false)
+        ->assertSee('data-timer-ends', false);
+
+    $event->stopTimer();
+    $this->getJson(route('events.timer.status', $event))->assertJson(['state' => 'ended', 'ends_ms' => null]);
+});
+
+test('other organizers cannot read the timer status', function () {
+    [, $event] = timedEvent();
+
+    $this->actingAs(User::factory()->create())
+        ->getJson(route('events.timer.status', $event))
+        ->assertForbidden();
+});

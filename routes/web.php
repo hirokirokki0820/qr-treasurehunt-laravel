@@ -46,6 +46,7 @@ Route::prefix('host')->group(function () {
         Route::delete('events/{event}/prizes', [PrizeController::class, 'destroyMany'])->name('events.prizes.destroy-many');
         Route::post('events/{event}/reset-acquisitions', [EventController::class, 'resetAcquisitions'])->name('events.reset-acquisitions');
         Route::post('events/{event}/end', [EventController::class, 'end'])->name('events.end');
+        Route::get('events/{event}/timer/status', [EventTimerController::class, 'status'])->name('events.timer.status');
         Route::post('events/{event}/timer/start', [EventTimerController::class, 'start'])->name('events.timer.start');
         Route::post('events/{event}/timer/extend', [EventTimerController::class, 'extend'])->name('events.timer.extend');
         Route::post('events/{event}/timer/stop', [EventTimerController::class, 'stop'])->name('events.timer.stop');

@@ -8,7 +8,8 @@
     $remaining = $status['remaining'] ?? 0;
     $total = $event->started_at && $event->ends_at ? max(1, $event->started_at->diffInSeconds($event->ends_at)) : 1;
     $urgent = $state === TimerState::Running && $remaining <= 300;
-    $poll = 'data-timer data-state="'.$state->value.'" data-version="'.$status['version'].'" data-status-url="'.route('play.status').'"';
+    $poll = 'data-timer data-state="'.$state->value.'" data-version="'.$status['version'].'" data-status-url="'.route('play.status').'"'
+        .' data-now-ms="'.$status['now_ms'].'" data-ends-ms="'.($status['ends_ms'] ?? '').'"';
 @endphp
 
 {{--

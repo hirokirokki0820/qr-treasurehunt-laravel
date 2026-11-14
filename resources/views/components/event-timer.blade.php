@@ -7,6 +7,7 @@
     $remaining = $event->remainingSeconds();
     $total = $event->started_at && $event->ends_at ? max(1, $event->started_at->diffInSeconds($event->ends_at)) : 1;
     $clock = fn (int $seconds) => sprintf('%02d:%02d', intdiv($seconds, 60), $seconds % 60);
+    $status = $event->timerStatus();
 @endphp
 
 {{-- 主催者のイベントページに出す宝探しタイマー。残り時間は画面側で1秒ごとに減らし、0になったら再読み込みする --}}
@@ -26,12 +27,12 @@
         </form>
     </section>
 @elseif ($state === TimerState::Running)
-    <section class="card mt-6 border-sea py-4 shadow-[4px_4px_0_0_var(--color-sea)]" data-timer data-state="running" data-remaining="{{ $remaining }}" data-total="{{ $total }}">
+    <section class="card mt-6 border-sea py-4 shadow-[4px_4px_0_0_var(--color-sea)]" data-timer data-state="running" data-remaining="{{ $remaining }}" data-total="{{ $total }}" data-version="{{ $status['version'] }}" data-status-url="{{ route('events.timer.status', $event) }}" data-now-ms="{{ $status['now_ms'] }}" data-ends-ms="{{ $status['ends_ms'] }}">
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
                 <p class="inline-flex items-center gap-1.5 rounded-full bg-sea px-2.5 py-0.5 text-xs font-bold text-white"><span class="h-2 w-2 rounded-full bg-white motion-safe:animate-pulse"></span>宝探し中</p>
                 <p class="mt-1 text-4xl font-black tabular-nums">残り <span data-timer-clock>{{ $clock($remaining) }}</span></p>
-                <p class="text-sm text-ink-soft">{{ $event->started_at->format('H:i') }} スタート ・ {{ $event->ends_at->format('H:i') }} 終了予定</p>
+                <p class="text-sm text-ink-soft">{{ $event->started_at->format('H:i') }} スタート ・ <span data-timer-ends>{{ $event->ends_at->format('H:i') }}</span> 終了予定</p>
             </div>
             <div class="flex flex-wrap gap-2 max-sm:w-full">
                 <form method="POST" action="{{ route('events.timer.reset', $event) }}" class="flex-1" data-confirm="タイマーをスタート前に戻します。参加者の画面も「まもなく宝探しスタート！」に戻り、宝箱を開けられなくなります（獲得済みの景品はそのまま残ります）。よろしいですか？" data-timer-reset>

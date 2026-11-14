@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\TimerState;
 use App\Models\Event;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 
@@ -16,6 +17,16 @@ class EventTimerController extends Controller
      * 延長ボタン1回で延ばす分数。
      */
     public const EXTEND_MINUTES = 5;
+
+    /**
+     * 主催者の画面の問い合わせ用。参加者の画面と同じ時刻の目安を返し、両方の表示をそろえる。
+     */
+    public function status(Event $event): JsonResponse
+    {
+        Gate::authorize('manage', $event);
+
+        return response()->json($event->timerStatus());
+    }
 
     public function start(Event $event): RedirectResponse
     {
