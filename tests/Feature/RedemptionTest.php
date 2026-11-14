@@ -57,7 +57,7 @@ test('scanning a redemption qr code opens the participant page for the organizer
         ->get(route('redemption.lookup', $participant->redeem_token))
         ->assertForbidden();
 
-    $this->actingAs($organizer)->get(route('redemption.scan'))->assertOk()->assertSee('data-accept-path="/host/redeem/"', false);
+    $this->actingAs($organizer)->get(route('redemption.scan'))->assertOk()->assertSee('data-accept-path="/host/redeem/,/host/card/"', false);
 });
 
 test('other organizers cannot redeem prizes', function () {
