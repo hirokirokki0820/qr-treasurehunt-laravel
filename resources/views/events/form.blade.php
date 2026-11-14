@@ -14,7 +14,7 @@
         <input id="max_prizes_per_participant" name="max_prizes_per_participant" type="number" min="1" max="999" inputmode="numeric" value="{{ old('max_prizes_per_participant', $event->max_prizes_per_participant) }}" class="field w-28" placeholder="なし">
         <span class="font-bold">個まで</span>
     </div>
-    <p class="mt-1 text-xs text-ink-soft">空欄にすると上限なしになります。上限に達した参加者は、それ以上QRコードを読み取れなくなります。</p>
+    <p class="mt-1 text-xs text-ink-soft">空欄にすると上限なしになります。上限に達した参加者は、それ以上お宝の宝箱を開けられなくなります（ハズレも開けられません）。</p>
 </div>
 <div>
     <label for="time_limit_minutes" class="label">制限時間</label>

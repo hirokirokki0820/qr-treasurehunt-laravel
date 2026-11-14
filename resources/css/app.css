@@ -135,3 +135,8 @@
         padding-left: 0.5rem;
     }
 }
+
+/* 景品を選んでいるあいだは、スマホの下の「引き換えQRを読み取る」を隠し、選択の操作（削除・やめる）と重ならないようにする */
+body:has([data-selecting]) [data-redeem-bar] {
+    display: none;
+}

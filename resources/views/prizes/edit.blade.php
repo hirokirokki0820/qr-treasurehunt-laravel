@@ -2,7 +2,7 @@
     <x-breadcrumbs class="mb-4" :items="[['label' => 'イベント一覧', 'url' => route('events.index')], ['label' => $event->name, 'url' => route('events.show', $event)], ['label' => '景品 No.'.$prize->number, 'url' => route('events.prizes.show', [$event, $prize, 'back' => $back])], ['label' => '編集']]" />
     <div class="card mt-3">
         <h1 class="text-2xl font-black">景品 No.{{ $prize->number }} を編集</h1>
-        <form method="POST" action="{{ route('events.prizes.update', [$event, $prize]) }}" class="mt-6 space-y-4">
+        <form data-prize-form method="POST" action="{{ route('events.prizes.update', [$event, $prize]) }}" class="mt-6 space-y-4">
             @csrf
             @method('PUT')
             @if ($back)

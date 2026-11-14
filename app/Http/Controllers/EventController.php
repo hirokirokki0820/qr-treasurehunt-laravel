@@ -211,18 +211,28 @@ class EventController extends Controller
 
     /**
      * 緊急時（全員つながらないとき）に紙で続けるための景品リストを、印刷用に表示する。
-     * 開いた時刻を記録し、イベントのページの「印刷しておきましょう」のお知らせを消す。
+     * 開いただけでは「印刷済み」にしない。印刷できたら、主催者が「印刷できた」を押す（markPrizeListPrinted）。
      */
     public function prizeList(Event $event): View
     {
         Gate::authorize('manage', $event);
 
-        $event->markPrizeListPrinted();
-
         return view('events.prize-list', [
             'event' => $event,
             'prizes' => $event->prizes()->with('participant')->orderBy('number')->get(),
         ]);
+    }
+
+    /**
+     * 景品リストを印刷できたことを記録し、イベントのページの「印刷しておきましょう」のお知らせを消す。
+     */
+    public function markPrizeListPrinted(Event $event): RedirectResponse
+    {
+        Gate::authorize('manage', $event);
+
+        $event->markPrizeListPrinted();
+
+        return redirect()->route('events.show', $event)->with('status', '景品リストを印刷済みにしました。受付に置いておいてください。');
     }
 
     /**

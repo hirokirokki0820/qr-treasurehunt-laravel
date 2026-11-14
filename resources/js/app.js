@@ -3,6 +3,7 @@ import { setUpBulkSelect } from './bulk-select';
 import { setUpConnectionWatch } from './connection';
 import { setUpEnterSubmit } from './enter-submit';
 import { autoDismissFlashMessages } from './flash-message';
+import { setUpPrizeForm } from './prize-form';
 import { renderQrCodes } from './qr-render';
 import { setUpScanner } from './qr-scanner';
 import { setUpSelectionMode } from './selection-mode';
@@ -14,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderQrCodes();
     setUpScanner();
     setUpBulkSelect();
+    setUpPrizeForm();
     setUpSelectionMode();
     limitTableRows();
     scrollBreadcrumbsToCurrent();

@@ -12,7 +12,7 @@
     @if ($timer === \App\Enums\TimerState::Ended)
         <x-play-timer :event="$event" />
     @elseif ($remainingAllowance === 0)
-        <x-limit-reached :event="$event" class="mt-6" />
+        <x-limit-reached :event="$event" class="mt-6" :redeem-link="$participant->prizes()->whereNull('redeemed_at')->exists()" />
     @else
         @if ($remainingAllowance !== null)
             <p class="mt-4 inline-block rounded-full bg-gold/25 px-3 py-1 text-sm font-bold">
@@ -64,7 +64,7 @@
 
             @php($unredeemedCount = $prizes->reject->isRedeemed()->count())
             @if ($unredeemedCount > 0)
-                <div class="mt-5 rounded-2xl border-2 border-dashed border-ink/40 bg-parchment/60 p-4 text-center">
+                <div id="redeem-qr" class="mt-5 scroll-mt-4 rounded-2xl border-2 border-dashed border-ink/40 bg-parchment/60 p-4 text-center">
                     <p class="font-black">景品の引き換え用QRコード</p>
                     <p class="mt-1 text-xs text-ink-soft">受付でこのQRコードを主催者に見せて、景品と交換してね（未引き換え {{ $unredeemedCount }}個）</p>
                     <div class="mx-auto mt-3 aspect-square w-full max-w-44 rounded-lg bg-white p-2" data-qr="{{ route('redemption.lookup', $participant->redeem_token) }}"></div>

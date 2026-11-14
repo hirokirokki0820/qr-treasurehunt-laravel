@@ -739,3 +739,36 @@ test('prizes can be filtered by those waiting to be handed over', function () {
     $this->get(route('events.prizes.show', [$event, $prize, 'back' => 'unredeemed']))
         ->assertSee(e(route('events.show', [$event, 'stock' => 'unredeemed'])).'#prize-list', false);
 });
+
+test('the prize form asks to choose between a win and a miss', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user)->create();
+    $prize = Prize::factory()->for($event)->miss()->create();
+
+    $this->actingAs($user);
+
+    $this->get(route('events.prizes.create', $event))
+        ->assertSee('data-prize-form', false)
+        ->assertSee('name="is_miss" value="0" class="h-5 w-5 accent-ink" checked', false)
+        ->assertSee('name="is_miss" value="1" class="h-5 w-5 accent-ink"  data-prize-kind', false);
+
+    $this->get(route('events.prizes.edit', [$event, $prize]))
+        ->assertSee('name="is_miss" value="1" class="h-5 w-5 accent-ink" checked', false);
+
+    $this->post(route('events.prizes.store', $event), ['name' => '当たりの景品', 'is_miss' => '0'])->assertRedirect();
+    expect($event->prizes()->where('name', '当たりの景品')->sole()->is_miss)->toBeFalse();
+});
+
+test('participants are shown as cards on phones with clear redemption counts', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user)->create();
+    $participant = Participant::factory()->for($event)->create(['nickname' => 'ヒロキ']);
+    Prize::factory()->count(2)->for($event)->takenBy($participant)->create();
+
+    $this->actingAs($user)->get(route('events.participants', $event))
+        ->assertOk()
+        ->assertSee('data-participant-cards', false)
+        ->assertSee('未引き換え 2個')
+        ->assertSee('獲得景品を見る')
+        ->assertSee('href="'.route('events.participants.show', [$event, $participant]).'" class="font-black', false);
+});

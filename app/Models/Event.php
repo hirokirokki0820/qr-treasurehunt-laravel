@@ -216,7 +216,7 @@ class Event extends Model
     }
 
     /**
-     * 景品リストの印刷ページを開いたことを記録する。
+     * 景品リストを印刷できたことを記録する（主催者が「印刷できた」を押したとき）。
      */
     public function markPrizeListPrinted(): void
     {

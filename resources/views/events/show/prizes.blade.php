@@ -16,9 +16,13 @@
 
 <section id="prize-list" class="card group/select mt-6 scroll-mt-4" data-selection-root>
     <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-lg font-black">景品一覧</h2>
+        <div>
+            <h2 class="text-lg font-black">景品一覧</h2>
+            <p class="text-xs text-ink-soft" data-list-time>{{ now()->format('H:i:s') }} 時点の状態</p>
+        </div>
         <div class="flex flex-wrap items-center gap-2 group-data-selecting/select:hidden">
-            <a href="{{ request()->fullUrl() }}" class="btn-secondary min-h-10 gap-1.5 px-3 py-1.5 text-sm" title="最新の獲得状況を表示します"><x-icon name="refresh" class="h-4 w-4" />更新</a>
+            {{-- 更新しても、絞り込みと一覧の位置はそのまま（同じURLだと読み込み直さないので、時刻を付ける） --}}
+            <a href="{{ route('events.show', array_filter([$event, 'stock' => $stock, 't' => now()->timestamp])) }}#prize-list" class="btn-secondary min-h-10 gap-1.5 px-3 py-1.5 text-sm" title="最新の獲得状況を表示します" data-refresh-list><x-icon name="refresh" class="h-4 w-4" />更新</a>
             @if ($prizes->isNotEmpty())
                 <button type="button" class="btn-secondary min-h-10 gap-1.5 px-3 py-1.5 text-sm" data-selection-enter><x-icon name="select" class="h-4 w-4" />選択・削除</button>
             @endif
@@ -47,7 +51,8 @@
     @endif
 
     {{-- 選択・削除モード（「選択・削除」を押したときだけ、チェックボックスと削除ボタンを出す） --}}
-    <div class="mt-4 hidden flex-wrap items-center justify-between gap-3 rounded-xl bg-ruby/8 px-3 py-2.5 text-sm group-data-selecting/select:flex">
+    {{-- スマホでは、下の方の景品を選んでも押せるよう、画面の下に固定する（引き換えの固定ボタンは選択中だけ隠す） --}}
+    <div class="mt-4 hidden flex-wrap items-center justify-between gap-3 rounded-xl bg-ruby/8 px-3 py-2.5 text-sm group-data-selecting/select:flex max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:z-40 max-sm:mt-0 max-sm:rounded-none max-sm:border-t-2 max-sm:border-ruby max-sm:bg-[#fbeeea] max-sm:px-4 max-sm:pt-2.5 max-sm:pb-[calc(0.625rem+env(safe-area-inset-bottom))] max-sm:shadow-[0_-4px_12px_rgba(31,42,68,0.12)]" data-selection-bar>
         <label class="inline-flex min-h-10 cursor-pointer items-center gap-2 px-1 font-bold">
             <input type="checkbox" class="h-5 w-5 accent-ruby" data-bulk-select-all>
             すべて選択
@@ -94,7 +99,7 @@
                     <tr class="prize-row border-b border-ink/15 group-data-selecting/select:cursor-pointer has-[:checked]:bg-ruby/5" data-selection-card data-prize-status="{{ $status }}">
                         <td class="prize-cell-chk hidden py-2 pr-2 group-data-selecting/select:table-cell">
                             <label class="-m-2 inline-flex cursor-pointer p-2.5">
-                                <input type="checkbox" name="prize_ids[]" value="{{ $prize->id }}" form="bulk-delete-form" class="h-5 w-5 accent-ruby" data-bulk-select-item aria-label="No.{{ $prize->number }}「{{ $prize->name }}」を選択">
+                                <input type="checkbox" name="prize_ids[]" value="{{ $prize->id }}" form="bulk-delete-form" class="h-5 w-5 accent-ruby" data-bulk-select-item data-bulk-label="No.{{ $prize->number }} {{ $prize->name }}" aria-label="No.{{ $prize->number }}「{{ $prize->name }}」を選択">
                             </label>
                         </td>
                         <td class="prize-cell-num py-2 pr-3 font-black tabular-nums"><span class="sm:hidden">No.</span>{{ $prize->number }}</td>
@@ -134,5 +139,6 @@
                 @endforeach
             </tbody>
         </table>
+        <div class="hidden h-24 max-sm:group-data-selecting/select:block" aria-hidden="true"></div>
     @endif
 </section>

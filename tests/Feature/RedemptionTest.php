@@ -32,7 +32,7 @@ test('organizers can redeem prizes one by one, all at once, and undo a redemptio
     $this->delete(route('events.prizes.redeem.cancel', [$event, $first]));
     expect($first->fresh()->isRedeemed())->toBeFalse();
 
-    $this->get(route('events.participants', $event))->assertSee('未 1個');
+    $this->get(route('events.participants', $event))->assertSee('未引き換え 1個');
 });
 
 test('participants see redemption status and their redemption qr code', function () {

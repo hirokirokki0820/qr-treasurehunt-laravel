@@ -47,7 +47,7 @@
 @elseif ($state === TimerState::Ended)
     <div class="mt-6 rounded-2xl bg-ink px-5 py-5 text-center text-white" role="status" {!! $poll !!}>
         <p class="text-lg font-black">宝探しは終了しました！</p>
-        <p class="mt-1 text-sm text-white/80">お疲れさまでした。これ以上QRコードは読み取れません。</p>
+        <p class="mt-1 text-sm text-white/80">お疲れさまでした。これ以上、お宝の宝箱は開けられません。</p>
         <p class="mt-3 text-sm font-bold text-gold">獲得した景品は、受付で交換してね！</p>
     </div>
 @endif

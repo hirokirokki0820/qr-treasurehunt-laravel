@@ -13,6 +13,19 @@
         <button type="button" onclick="window.print()" class="btn-primary"><x-icon name="printer" />印刷する</button>
     </div>
 
+    {{-- 開いただけでは印刷済みにしない。紙が出たのを確かめてから押してもらう --}}
+    <form method="POST" action="{{ route('events.prize-list.printed', $event) }}" class="no-print card mb-6 flex flex-wrap items-center justify-between gap-3 border-sea" data-prize-list-printed-form>
+        @csrf
+        <p class="text-sm">
+            @if ($event->prize_list_printed_at && ! $event->needsPrizeListPrint())
+                <span class="font-bold text-sea">✓ {{ $event->prize_list_printed_at->format('n月j日 H:i') }}に印刷済みにしました。</span>景品を足したときは、印刷し直してもう一度押してください。
+            @else
+                紙に印刷できたら、右のボタンを押してください。イベントのページの「印刷しておきましょう」のお知らせが消えます。
+            @endif
+        </p>
+        <button type="submit" class="btn-secondary shrink-0 gap-1.5">✓ 印刷できた</button>
+    </form>
+
     <div class="no-print card mb-6 space-y-2 text-sm">
         <p class="font-bold">会場の回線やサーバーの不具合で全員がつながらなくなっても、このリストがあれば紙でイベントを続けられます。</p>
         <p>前日までに印刷して、受付に置いておいてください。当たりとハズレが書いてあるので、参加者には見せないでください。景品を足したときは、印刷し直してください。</p>

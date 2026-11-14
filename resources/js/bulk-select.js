@@ -12,8 +12,31 @@ export function setUpBulkSelect() {
     const items = Array.from(document.querySelectorAll('[data-bulk-select-item]'));
     const count = button.querySelector('[data-bulk-delete-count]');
 
+    // 確認のメッセージに、選んだもの（data-bulk-label）を並べる。選んだ数が多いときは先頭の10件だけ
+    const form = button.form;
+    const baseConfirm = form?.dataset.confirm;
+
+    const updateConfirm = () => {
+        if (!form || !baseConfirm) {
+            return;
+        }
+
+        const labels = items.filter((item) => item.checked && item.dataset.bulkLabel).map((item) => `・${item.dataset.bulkLabel}`);
+
+        if (labels.length === 0) {
+            form.dataset.confirm = baseConfirm;
+
+            return;
+        }
+
+        const shown = labels.slice(0, 10).join('\n');
+        const more = labels.length > 10 ? `\n…ほか${labels.length - 10}件` : '';
+        form.dataset.confirm = `次の${labels.length}件を削除します。\n${shown}${more}\n\n${baseConfirm}`;
+    };
+
     const refresh = () => {
         const checked = items.filter((item) => item.checked).length;
+        updateConfirm();
 
         button.disabled = checked === 0;
         count.textContent = checked > 0 ? `（${checked}件）` : '';

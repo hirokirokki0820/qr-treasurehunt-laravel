@@ -95,6 +95,16 @@ export function setUpScanner() {
         startButton.disabled = true;
         showMessage('カメラを起動しています…');
 
+        // 許可の確認が出たまま、などで起動が進まないときは、10秒で案内を出してボタンを押せるように戻す
+        const slowStart = window.setTimeout(() => {
+            if (scanner?.isScanning) {
+                return;
+            }
+
+            showMessage('カメラがなかなか起動しません。画面の上や下に「カメラの使用を許可」が出ていたら、許可してください。うまくいかないときは「カメラを起動」をもう一度押すか、Safari や Chrome で開き直してください。スマホ標準のカメラアプリでも読み取れます。', 'error');
+            startButton.disabled = false;
+        }, 10000);
+
         try {
             const { Html5Qrcode } = await import('html5-qrcode');
 
@@ -115,8 +125,9 @@ export function setUpScanner() {
             showMessage('QRコードを枠の中に写してください。');
         } catch (error) {
             console.error(error);
-            showMessage('カメラを起動できませんでした。ブラウザのカメラ許可を確認して「カメラを起動」を押すか、スマホ標準のカメラアプリで読み取ってください。', 'error');
+            showMessage(cameraErrorMessage(error), 'error');
         } finally {
+            window.clearTimeout(slowStart);
             startButton.disabled = false;
         }
     };
@@ -136,4 +147,24 @@ export function setUpScanner() {
     window.addEventListener('pagehide', () => {
         stop();
     });
+}
+
+/**
+ * カメラを起動できなかった理由を、分かる範囲で言い分ける。
+ */
+function cameraErrorMessage(error) {
+    const text = `${error?.name ?? ''} ${error?.message ?? error ?? ''}`;
+    const fallback = 'スマホ標準のカメラアプリで読み取ることもできます。';
+
+    if (/NotAllowed|Permission/i.test(text)) {
+        return `カメラの使用が許可されていません。ブラウザの設定でこのサイトのカメラを「許可」にしてから「カメラを起動」を押してください。${fallback}`;
+    }
+    if (/NotFound|Requested device not found|no camera/i.test(text)) {
+        return `この端末でカメラが見つかりませんでした。カメラのあるスマホやタブレットで開いてください。${fallback}`;
+    }
+    if (/NotReadable|in use|Could not start/i.test(text)) {
+        return `カメラをほかのアプリが使っているようです。カメラを使っているアプリを閉じてから「カメラを起動」を押してください。${fallback}`;
+    }
+
+    return `カメラを起動できませんでした。ブラウザのカメラ許可を確認して「カメラを起動」を押すか、Safari や Chrome で開き直してください。${fallback}`;
 }

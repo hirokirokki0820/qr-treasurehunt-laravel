@@ -5,7 +5,7 @@ use App\Models\Participant;
 use App\Models\Prize;
 use App\Models\User;
 
-test('the event page asks the organizer to print the prize list until it is opened', function () {
+test('the event page asks the organizer to print the prize list until they say it is printed', function () {
     $user = User::factory()->create();
     $event = Event::factory()->for($user)->create();
     Prize::factory()->for($event)->create();
@@ -16,8 +16,12 @@ test('the event page asks the organizer to print the prize list until it is open
         ->assertSee('当日の備えに、景品リストを印刷しておきましょう')
         ->assertSee('data-prize-list-print-button', false);
 
-    $this->get(route('events.prize-list', $event))->assertOk();
+    // 開いただけでは、印刷済みにしない
+    $this->get(route('events.prize-list', $event))->assertOk()->assertSee('data-prize-list-printed-form', false);
+    expect($event->fresh()->prize_list_printed_at)->toBeNull();
+    $this->get(route('events.show', $event))->assertSee('data-prize-list-reminder', false);
 
+    $this->post(route('events.prize-list.printed', $event))->assertRedirect(route('events.show', $event));
     expect($event->fresh()->prize_list_printed_at)->not->toBeNull();
     $this->get(route('events.show', $event))
         ->assertDontSee('data-prize-list-reminder', false)
@@ -38,7 +42,7 @@ test('adding a prize after printing asks to print the list again', function () {
     $event = Event::factory()->for($user)->create();
     Prize::factory()->for($event)->create();
 
-    $this->actingAs($user)->get(route('events.prize-list', $event));
+    $this->actingAs($user)->post(route('events.prize-list.printed', $event));
     $this->travel(1)->minutes();
     Prize::factory()->for($event)->create();
 
@@ -51,7 +55,7 @@ test('ending the event asks for a fresh prize list next time', function () {
     $event = Event::factory()->for($user)->create();
     Prize::factory()->for($event)->create();
 
-    $this->actingAs($user)->get(route('events.prize-list', $event));
+    $this->actingAs($user)->post(route('events.prize-list.printed', $event));
     $this->post(route('events.end', $event));
 
     expect($event->fresh()->prize_list_printed_at)->toBeNull();
@@ -79,5 +83,12 @@ test('another organizer cannot open the prize list', function () {
         ->get(route('events.prize-list', $event))
         ->assertForbidden();
 
+    expect($event->fresh()->prize_list_printed_at)->toBeNull();
+});
+
+test('only the organizer can mark the prize list as printed', function () {
+    $event = Event::factory()->create();
+
+    $this->actingAs(User::factory()->create())->post(route('events.prize-list.printed', $event))->assertForbidden();
     expect($event->fresh()->prize_list_printed_at)->toBeNull();
 });

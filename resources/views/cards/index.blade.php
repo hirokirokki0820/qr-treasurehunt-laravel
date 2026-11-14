@@ -66,6 +66,6 @@
                 @endforeach
             </ul>
         @endif
-        <p class="mt-4 text-xs text-ink-soft">参加者カードの枚数も参加人数に数えます。イベントを終了すると、カードも使えなくなります（次の回は作り直して印刷してください）。</p>
+        <p class="mt-4 text-xs text-ink-soft">参加者カードの枚数も参加人数に数えます。イベントのページで「イベントを片付ける」を押すと、カードも使えなくなります（次の回は作り直して印刷してください）。</p>
     </section>
 </x-layouts.app>
