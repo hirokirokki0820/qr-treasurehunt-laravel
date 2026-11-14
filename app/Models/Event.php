@@ -173,7 +173,8 @@ class Event extends Model
      */
     public function participantLimit(): ?int
     {
-        $ownerLimit = $this->user?->participantLimit() ?? User::FREE_PARTICIPANT_LIMIT;
+        // 主催者が見つからないときは、いちばん小さい人数にする（null は「上限なし」なので ?? は使わない）
+        $ownerLimit = $this->user !== null ? $this->user->participantLimit() : User::FREE_PARTICIPANT_LIMIT;
 
         if ($this->trial_mode) {
             return $ownerLimit === null ? self::TRIAL_PARTICIPANT_LIMIT : min(self::TRIAL_PARTICIPANT_LIMIT, $ownerLimit);
