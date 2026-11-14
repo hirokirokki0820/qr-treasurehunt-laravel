@@ -165,6 +165,7 @@ test('organizers can reset a started or ended timer back to waiting, and partici
         ->and($event->started_at)->toBeNull()
         ->and($prize->fresh()->participant_id)->toBe($participant->id);
 
+    $participant->unsetRelation('event');
     $this->actingAs($participant, 'participant');
     $status = $this->getJson(route('play.status'))->assertJson(['state' => 'waiting'])->json();
     expect($status['version'])->not->toBe($runningVersion);
