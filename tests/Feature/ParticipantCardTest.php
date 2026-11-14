@@ -134,6 +134,8 @@ test('cards print 3 by 3 by default and 2 by 2 when large is chosen', function (
 
 test('the camera pages lead back to the event they were opened from', function () {
     [$user, $event] = cardEvent();
+    // 引き換えのボタンは、参加者がいる（当日の）ときに出る
+    Participant::factory()->for($event)->create();
 
     $this->actingAs($user)->get(route('events.show', $event))
         ->assertSee(route('redemption.scan', ['event' => $event->id]), false);
