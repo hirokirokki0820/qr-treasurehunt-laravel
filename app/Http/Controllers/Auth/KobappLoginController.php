@@ -35,7 +35,8 @@ class KobappLoginController extends Controller
             return redirect()->route('login')->with('error', $e->getMessage());
         }
 
-        Auth::guard('web')->login($user);
+        // 主催者は、ログアウトするまで30日ログインしたまま（長さは config/auth.php の remember）
+        Auth::guard('web')->login($user, remember: true);
         $request->session()->regenerate();
 
         return redirect()->intended(route('events.index'));

@@ -233,3 +233,14 @@ test('the plan from kobapp is saved on every login and unknown values fall back 
         ->and($login(['plan' => 'monitor'])->plan)->toBe('monitor')
         ->and($login([])->plan)->toBe('free');
 });
+
+test('organizers stay logged in for thirty days', function () {
+    fakeKobappToken();
+    $query = startKobappLogin();
+
+    $response = $this->get(route('login.kobapp.callback', ['code' => 'the-code', 'state' => $query['state']]));
+    $cookie = collect($response->headers->getCookies())->first(fn ($c) => str_starts_with($c->getName(), 'remember_web_'));
+
+    expect($cookie)->not->toBeNull()
+        ->and(abs($cookie->getExpiresTime() - now()->addDays(30)->getTimestamp()))->toBeLessThan(120);
+});

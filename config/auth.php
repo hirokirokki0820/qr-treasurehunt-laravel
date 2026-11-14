@@ -42,6 +42,8 @@ return [
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
+            // 主催者の「ログインしたまま」の長さ（分）。30日
+            'remember' => 43200,
         ],
 
         'participant' => [
