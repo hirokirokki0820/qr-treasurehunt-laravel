@@ -8,8 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 class PrizeRequest extends FormRequest
 {
     /**
-     * ハズレの場合、登録時は景品名が空なら「ハズレ」にする。
-     * 編集でハズレにしたときは、景品名も「ハズレ」に書き換える。
+     * ハズレの景品名は、いつも「ハズレ」にする（ハズレなのに景品名があると、受付で取り違えやすいため）。
      */
     protected function prepareForValidation(): void
     {
@@ -19,9 +18,7 @@ class PrizeRequest extends FormRequest
             return;
         }
 
-        if ($this->isMethod('PUT') || $this->isMethod('PATCH') || blank($this->input('name'))) {
-            $this->merge(['name' => 'ハズレ']);
-        }
+        $this->merge(['name' => 'ハズレ']);
     }
 
     /**

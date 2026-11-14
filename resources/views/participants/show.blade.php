@@ -81,4 +81,10 @@
             </ul>
         @endif
     </div>
+
+    {{-- 引き換えのあとは、次の人のQRを続けて読み取れるように。参加者一覧へはパンくずから戻れる --}}
+    <div class="mt-6 grid gap-3 sm:grid-cols-2" data-participant-actions>
+        <a href="{{ route('redemption.scan', ['event' => $event->id]) }}" class="flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-ink bg-ink px-4 py-3 text-lg font-black text-white shadow-[3px_3px_0_0_var(--color-gold)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"><x-icon name="camera" class="h-6 w-6" />次の引き換えQRを読み取る</a>
+        <a href="{{ route('events.show', $event) }}" class="btn-secondary min-h-14 w-full">イベントのページに戻る</a>
+    </div>
 </x-layouts.app>

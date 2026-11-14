@@ -772,3 +772,34 @@ test('participants are shown as cards on phones with clear redemption counts', f
         ->assertSee('獲得景品を見る')
         ->assertSee('href="'.route('events.participants.show', [$event, $participant]).'" class="font-black', false);
 });
+
+test('a miss never keeps a prize name', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user)->create();
+    $this->actingAs($user);
+
+    $this->post(route('events.prizes.store', $event), ['name' => '残念賞', 'is_miss' => '1'])->assertRedirect();
+    $miss = $event->prizes()->sole();
+    expect($miss->name)->toBe('ハズレ')->and($miss->is_miss)->toBeTrue();
+
+    $this->get(route('events.prizes.edit', [$event, $miss]))
+        ->assertSee('placeholder="ハズレ（景品名は入れません）"', false)
+        ->assertSee('data-placeholder-miss="ハズレ（景品名は入れません）" disabled', false);
+});
+
+test('the participant pages lead back to the event and on to the next scan', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user)->create();
+    $participant = Participant::factory()->for($event)->create();
+
+    $this->actingAs($user);
+
+    $this->get(route('events.participants', $event))
+        ->assertSee('data-back-to-event', false)
+        ->assertSee('イベントのページに戻る');
+
+    $this->get(route('events.participants.show', [$event, $participant]))
+        ->assertSee(route('redemption.scan', ['event' => $event->id]), false)
+        ->assertSee('次の引き換えQRを読み取る')
+        ->assertSee('イベントのページに戻る');
+});

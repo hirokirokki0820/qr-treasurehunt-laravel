@@ -101,4 +101,6 @@
             </div>
         @endif
     </div>
+
+    <a href="{{ route('events.show', $event) }}" class="btn-secondary mt-6 min-h-12 w-full" data-back-to-event>イベントのページに戻る</a>
 </x-layouts.app>

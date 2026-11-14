@@ -18,7 +18,8 @@
 
 <div>
     <label for="name" class="label">景品名</label>
-    <input id="name" name="name" type="text" value="{{ old('name', $prize->name) }}" class="field" maxlength="100" placeholder="例：お菓子の詰め合わせ（ハズレの場合は空欄でもOK）" @if (! $prize->exists) autofocus @endif>
+    <input id="name" name="name" type="text" value="{{ $isMiss ? '' : old('name', $prize->name) }}" class="field disabled:cursor-not-allowed disabled:bg-ink/5" maxlength="100" placeholder="{{ $isMiss ? 'ハズレ（景品名は入れません）' : '例：お菓子の詰め合わせ' }}" data-placeholder-win="例：お菓子の詰め合わせ" data-placeholder-miss="ハズレ（景品名は入れません）" @disabled($isMiss) @if (! $prize->exists) autofocus @endif>
+    <p class="mt-1 text-xs text-ink-soft" data-miss-note @if (! $isMiss) hidden @endif>ハズレの景品名は「ハズレ」になります。</p>
 </div>
 <div>
     <label for="description" class="label">メッセージ（宝箱を開けたときに表示されます・空欄でもOK）</label>
