@@ -70,7 +70,7 @@
                 @if ($limitReached && $result === ClaimResult::Won)
                     <p class="rounded-xl bg-gold/20 px-3 py-2 text-sm font-bold">これでこの子は獲得上限（{{ $prize->event->prizeLimitLabel() }}）です。</p>
                 @endif
-                <a href="{{ route('cards.scan') }}" class="btn-primary w-full gap-2"><x-icon name="camera" class="h-5 w-5 shrink-0" />次の子のカードを読み取る</a>
+                <a href="{{ route('cards.scan', ['event' => $card->event_id]) }}" class="btn-primary w-full gap-2"><x-icon name="camera" class="h-5 w-5 shrink-0" />次の子のカードを読み取る</a>
                 <a href="{{ route('cards.play', $card->card_token) }}" class="btn-secondary w-full">同じ子で、次のお宝を読み取る</a>
             </div>
         @endif

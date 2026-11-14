@@ -9,7 +9,7 @@
     </div>
 
     <div class="mt-4 grid gap-3 sm:grid-cols-2">
-        <a href="{{ route('cards.scan') }}" class="btn-primary w-full gap-2 py-3"><x-icon name="camera" class="h-5 w-5 shrink-0" />参加者カードを読み取る</a>
+        <a href="{{ route('cards.scan', ['event' => $event->id]) }}" class="btn-primary w-full gap-2 py-3"><x-icon name="camera" class="h-5 w-5 shrink-0" />参加者カードを読み取る</a>
         <a href="{{ route('cards.print', $event) }}" @class(['btn-secondary w-full gap-2 py-3', 'pointer-events-none opacity-50' => $cards->isEmpty()])><x-icon name="printer" class="h-5 w-5 shrink-0" />参加者カードを印刷</a>
     </div>
 

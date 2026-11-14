@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CardPrintSize;
 use App\Enums\ClaimResult;
 use App\Enums\TimerState;
 use App\Models\Event;
@@ -72,12 +73,14 @@ class ParticipantCardController extends Controller
         return back()->with('status', "参加者カードを{$created}枚作りました。印刷して配ってください。");
     }
 
-    public function print(Event $event): View
+    public function print(Request $request, Event $event): View
     {
         Gate::authorize('manage', $event);
 
         return view('cards.print', [
             'event' => $event,
+            'size' => CardPrintSize::tryFrom((string) $request->query('size')) ?? CardPrintSize::Medium,
+            'sizes' => CardPrintSize::cases(),
             'cards' => $event->participants()->whereNotNull('card_token')->orderBy('id')->get(),
         ]);
     }
@@ -85,9 +88,11 @@ class ParticipantCardController extends Controller
     /**
      * 参加者カードを読み取るカメラ画面。
      */
-    public function scan(): View
+    public function scan(Request $request): View
     {
-        return view('cards.scan');
+        $event = Event::find($request->integer('event'));
+
+        return view('cards.scan', ['event' => $event !== null && Gate::allows('manage', $event) ? $event : null]);
     }
 
     /**

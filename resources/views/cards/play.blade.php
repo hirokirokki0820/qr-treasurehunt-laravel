@@ -44,5 +44,5 @@
         </section>
     @endif
 
-    <a href="{{ route('cards.scan') }}" class="btn-secondary mt-6 w-full gap-2"><x-icon name="camera" class="h-5 w-5 shrink-0" />次の子のカードを読み取る</a>
+    <a href="{{ route('cards.scan', ['event' => $event->id]) }}" class="btn-secondary mt-6 w-full gap-2"><x-icon name="camera" class="h-5 w-5 shrink-0" />次の子のカードを読み取る</a>
 </x-layouts.app>

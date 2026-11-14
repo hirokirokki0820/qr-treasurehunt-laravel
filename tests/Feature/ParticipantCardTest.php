@@ -117,3 +117,38 @@ test('the scanners accept card and treasure codes in card mode', function () {
 
     $this->actingAs($user)->get(route('cards.scan'))->assertOk()->assertSee('data-accept-path="/host/card/"', false);
 });
+
+test('cards print 3 by 3 by default and 2 by 2 when large is chosen', function () {
+    [$user, $event] = cardEvent();
+    $event->createCards(['たろう']);
+
+    $this->actingAs($user)->get(route('cards.print', $event))
+        ->assertOk()
+        ->assertSee('print:grid-cols-3 print:grid-rows-3')
+        ->assertSee('2×2枚')
+        ->assertSee('3×3枚');
+
+    $this->get(route('cards.print', [$event, 'size' => 'large']))
+        ->assertSee('print:grid-cols-2 print:grid-rows-2');
+});
+
+test('the camera pages lead back to the event they were opened from', function () {
+    [$user, $event] = cardEvent();
+
+    $this->actingAs($user)->get(route('events.show', $event))
+        ->assertSee(route('redemption.scan', ['event' => $event->id]), false);
+    $this->get(route('cards.index', $event))
+        ->assertSee(route('cards.scan', ['event' => $event->id]), false);
+
+    $this->get(route('redemption.scan', ['event' => $event->id]))
+        ->assertSee('イベントのページに戻る')
+        ->assertSee(route('events.show', $event), false);
+    $this->get(route('cards.scan', ['event' => $event->id]))
+        ->assertSee('参加者カードのページに戻る')
+        ->assertSee(route('cards.index', $event), false);
+
+    // ほかの主催者のイベントは、戻り先として出さない
+    $foreign = Event::factory()->create(['name' => 'よその会']);
+    $this->get(route('redemption.scan', ['event' => $foreign->id]))->assertOk()->assertDontSee('よその会');
+    $this->get(route('cards.scan', ['event' => $foreign->id]))->assertOk()->assertDontSee('よその会');
+});

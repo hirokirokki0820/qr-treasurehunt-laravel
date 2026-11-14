@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\Participant;
 use App\Models\Prize;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
@@ -17,9 +18,19 @@ class RedemptionController extends Controller
     /**
      * 参加者の「引き換え用QRコード」を読み取るカメラ画面。
      */
-    public function scan(): View
+    public function scan(Request $request): View
     {
-        return view('redemption.scan');
+        return view('redemption.scan', ['event' => $this->eventFrom($request)]);
+    }
+
+    /**
+     * カメラ画面の「戻る」先にするイベント（?event=ID で開いたとき。自分のイベントだけ）。
+     */
+    private function eventFrom(Request $request): ?Event
+    {
+        $event = Event::find($request->integer('event'));
+
+        return $event !== null && Gate::allows('manage', $event) ? $event : null;
     }
 
     /**

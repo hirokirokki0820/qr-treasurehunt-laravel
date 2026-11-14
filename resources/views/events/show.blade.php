@@ -63,7 +63,7 @@
         <x-errors />
     </div>
 
-    <a href="{{ route('redemption.scan') }}" class="btn-primary mb-3 w-full gap-2 py-3"><x-icon name="camera" class="h-5 w-5 shrink-0" />引き換えQRを読み取る</a>
+    <a href="{{ route('redemption.scan', ['event' => $event->id]) }}" class="btn-primary mb-3 w-full gap-2 py-3"><x-icon name="camera" class="h-5 w-5 shrink-0" />引き換えQRを読み取る</a>
 
     {{-- 景品リストの印刷は、まだのとき（景品を足したときも）はお知らせから、済んだあとは下のボタンから --}}
     @php($needsPrizeListPrint = $event->needsPrizeListPrint())
