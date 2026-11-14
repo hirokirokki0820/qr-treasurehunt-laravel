@@ -205,7 +205,7 @@ test('the timer status gives the end and server time in milliseconds so every sc
     ];
 
     $this->actingAs($participant, 'participant')->getJson(route('play.status'))->assertJson($expected);
-    $this->actingAs($organizer)->getJson(route('events.timer.status', $event))->assertJson($expected);
+    $this->actingAs($organizer, 'web')->getJson(route('events.timer.status', $event))->assertJson($expected);
 
     $this->get(route('events.show', $event))
         ->assertSee('data-status-url="'.route('events.timer.status', $event).'"', false)
