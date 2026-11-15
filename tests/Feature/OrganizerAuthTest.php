@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Event;
+use App\Models\Participant;
 use App\Models\User;
 use App\Services\KobappAuth;
 use Illuminate\Http\Client\Request as HttpRequest;
@@ -247,7 +249,7 @@ test('organizers stay logged in for thirty days', function () {
 
 test('logging out sits inside the menu and asks first', function () {
     $user = User::factory()->create();
-    $event = \App\Models\Event::factory()->for($user)->create();
+    $event = Event::factory()->for($user)->create();
 
     $this->actingAs($user)->get(route('events.index'))
         ->assertSee('data-organizer-menu', false)
@@ -255,7 +257,7 @@ test('logging out sits inside the menu and asks first', function () {
         ->assertSee('ログアウトしますか？')
         ->assertDontSee('開催中のイベントがあります');
 
-    \App\Models\Participant::factory()->for($event)->create();
+    Participant::factory()->for($event)->create();
     $this->get(route('events.index'))->assertSee('開催中のイベントがあります');
 
     // 確認は画面の側。送れば、これまでどおりログアウトする
