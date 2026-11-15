@@ -29,19 +29,22 @@
                     <button type="button" class="btn-secondary min-h-10 gap-1.5 px-3 py-1.5 text-sm data-[due]:bg-gold/40 data-[due]:ring-2 data-[due]:ring-gold-deep" data-snapshot-button><x-icon name="camera" class="h-4 w-4" />控えを保存</button>
                     <span class="text-[11px] text-ink-soft" data-snapshot-last>まだ保存していません</span>
                 </span>
-                <script type="application/json" data-snapshot-data>@json([
-                    'event' => $event->name,
-                    'phase' => $event->phase() === 'live' ? '開催中' : '締切後',
-                    'prizes' => $snapshotPrizes->map(fn ($prize) => [
-                        'no' => $prize->number,
-                        'name' => $prize->name,
-                        'kind' => $prize->is_miss ? 'ハズレ' : '当たり',
-                        'status' => $prize->statusLabel(),
-                        'winner' => $prize->participant?->nickname,
-                        'winnerId' => $prize->participant?->displayId(),
-                        'at' => $prize->acquired_at?->format('H:i'),
-                    ])->values(),
-                ])</script>
+                @php
+                    $snapshotData = [
+                        'event' => $event->name,
+                        'phase' => $event->phase() === 'live' ? '開催中' : '締切後',
+                        'prizes' => $snapshotPrizes->map(fn ($prize) => [
+                            'no' => $prize->number,
+                            'name' => $prize->name,
+                            'kind' => $prize->is_miss ? 'ハズレ' : '当たり',
+                            'status' => $prize->statusLabel(),
+                            'winner' => $prize->participant?->nickname,
+                            'winnerId' => $prize->participant?->displayId(),
+                            'at' => $prize->acquired_at?->format('H:i'),
+                        ])->values()->all(),
+                    ];
+                @endphp
+                <script type="application/json" data-snapshot-data>@json($snapshotData)</script>
             @endif
             @if ($prizes->isNotEmpty())
                 <button type="button" class="btn-secondary min-h-10 gap-1.5 px-3 py-1.5 text-sm" data-selection-enter><x-icon name="select" class="h-4 w-4" />選択・削除</button>
