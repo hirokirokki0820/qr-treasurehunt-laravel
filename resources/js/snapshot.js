@@ -167,87 +167,209 @@ function download(file) {
 }
 
 /**
- * 控えの画像を描く。幅 1080px、景品1件につき1行。
+ * 状態ごとの色（控えの画像と、控えのメールでそろえる）。色だけに頼らず、状態の名前も必ず書く。
+ */
+const STATUS_STYLE = {
+    未獲得: { fill: '#eceae4', text: '#4a5571' },
+    引き換え待ち: { fill: '#fbe3a6', text: '#1f2a44', row: '#fdf3d6' },
+    引き換え済み: { fill: '#d6ece9', text: '#1f5a55' },
+    対象外: { fill: '#f1efea', text: '#8a90a2' },
+};
+
+/**
+ * 控えの画像を描く。幅 1080px。上に集計のカード、その下に No.／景品名／種類／状態／獲得者 の表。
+ * 景品名がいちばん広い列で、長い名前は2行まで折り返す（それより長いときは「…」）。ハズレの行は灰色で、太字にしない。
  */
 function drawSnapshot(data, now, pageLabel, counts, stale) {
     const width = 1080;
-    const pagePadding = 48;
-    const rowHeight = 46;
-    const headerHeight = 210;
-    const rows = data.prizes;
-    const height = headerHeight + rowHeight * (rows.length + 1) + 60;
+    const pad = 48;
+    const lineHeight = 28;
+    const font = (size, weight = 400) => `${weight} ${size}px "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif`;
+
+    const columns = {
+        no: { x: pad, width: 64 },
+        name: { x: pad + 64, width: 0 },
+        kind: { x: 0, width: 76 },
+        status: { x: 0, width: 140 },
+        winner: { x: 0, width: 250 },
+    };
+    columns.winner.x = width - pad - columns.winner.width;
+    columns.status.x = columns.winner.x - columns.status.width - 12;
+    columns.kind.x = columns.status.x - columns.kind.width - 8;
+    columns.name.width = columns.kind.x - columns.name.x - 16;
+
+    // 行の高さを先に決める（景品名の行数で変わる）
+    const measure = document.createElement('canvas').getContext('2d');
+    const rows = data.prizes.map((row) => {
+        const isMiss = row.kind === 'ハズレ';
+        measure.font = font(21, isMiss ? 400 : 700);
+        const lines = wrap(measure, row.name, columns.name.width, 2);
+
+        return { ...row, isMiss, lines, height: Math.max(52, 20 + lines.length * lineHeight) };
+    });
+
+    const headerBottom = (data.schedule ? 212 : 182) + (stale ? 34 : 0);
+    const cardsTop = headerBottom;
+    const cardsHeight = 92;
+    const tableTop = cardsTop + cardsHeight + 28;
+    const tableHeadHeight = 44;
+    const height = tableTop + tableHeadHeight + rows.reduce((sum, row) => sum + row.height, 0) + 70;
 
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext('2d');
-    const font = (size, weight = 400) => `${weight} ${size}px "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif`;
-
+    ctx.textBaseline = 'middle';
     ctx.fillStyle = '#fffdf8';
     ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = '#1f2a44';
-    ctx.textBaseline = 'middle';
 
-
-    ctx.font = font(22, 700);
-    ctx.fillText(`QR宝探し　景品の獲得状況の控え${pageLabel}`, pagePadding, 50);
-    ctx.font = font(36, 800);
-    ctx.fillText(fit(ctx, data.event, width - pagePadding * 2), pagePadding, 100);
-    ctx.font = font(22, 400);
+    // 見出し：アプリ名、イベント名、開催予定、集計の時点と状況
+    let y = 46;
     ctx.fillStyle = '#4a5571';
+    ctx.font = font(20, 700);
+    ctx.fillText(`QR宝探し　景品の獲得状況の控え${pageLabel}`, pad, y);
+    y += 50;
+    ctx.fillStyle = '#1f2a44';
+    ctx.font = font(36, 800);
+    ctx.fillText(fit(ctx, data.event, width - pad * 2), pad, y);
+    ctx.font = font(21, 400);
+    ctx.fillStyle = '#4a5571';
+    if (data.schedule) {
+        y += 46;
+        ctx.fillText(`開催予定：${data.schedule}`, pad, y);
+    }
+    y += 36;
     const when = now.toLocaleString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
-    ctx.fillText(`${when} 時点・${data.phase}　未獲得 ${counts['未獲得'] ?? 0}／引き換え待ち ${counts['引き換え待ち'] ?? 0}／引き換え済み ${counts['引き換え済み'] ?? 0}`, pagePadding, 150);
+    ctx.fillText(`集計：${when} 時点${data.phase ? '・' + data.phase : ''}`, pad, y);
     if (stale) {
+        y += 34;
         ctx.fillStyle = '#b9402b';
         ctx.font = font(20, 700);
-        ctx.fillText('つながらないため、ページを開いた時点の状態です（最新ではありません）', pagePadding, 185);
+        ctx.fillText('つながらないため、ページを開いた時点の状態です（最新ではありません）', pad, y);
     }
 
-    const columns = [
-        { label: 'No.', x: pagePadding, width: 80 },
-        { label: '景品名', x: pagePadding + 80, width: 420 },
-        { label: '種類', x: pagePadding + 510, width: 90 },
-        { label: '状態', x: pagePadding + 600, width: 150 },
-        { label: '獲得者', x: pagePadding + 760, width: width - pagePadding - (pagePadding + 760) },
+    // 集計のカード（未獲得／引き換え待ち／引き換え済み）
+    const cards = [
+        ['未獲得', '#f3eee2'],
+        ['引き換え待ち', STATUS_STYLE.引き換え待ち.fill],
+        ['引き換え済み', STATUS_STYLE.引き換え済み.fill],
     ];
-
-    let y = headerHeight;
-    ctx.fillStyle = '#1f2a44';
-    ctx.fillRect(pagePadding, y + rowHeight - 3, width - pagePadding * 2, 3);
-    ctx.font = font(20, 700);
-    columns.forEach((column) => ctx.fillText(column.label, column.x, y + rowHeight / 2));
-    y += rowHeight;
-
-    rows.forEach((row, index) => {
-        if (row.status === '引き換え待ち') {
-            ctx.fillStyle = '#fbe9bf';
-            ctx.fillRect(pagePadding, y, width - pagePadding * 2, rowHeight);
-        } else if (index % 2 === 1) {
-            ctx.fillStyle = '#f7f0df';
-            ctx.fillRect(pagePadding, y, width - pagePadding * 2, rowHeight);
-        }
-
+    const gap = 16;
+    const cardWidth = (width - pad * 2 - gap * 2) / 3;
+    cards.forEach(([label, fill], index) => {
+        const x = pad + index * (cardWidth + gap);
+        roundRect(ctx, x, cardsTop, cardWidth, cardsHeight, 14, fill);
+        ctx.fillStyle = '#4a5571';
+        ctx.font = font(19, 700);
+        ctx.fillText(label, x + 20, cardsTop + 28);
         ctx.fillStyle = '#1f2a44';
-        const middle = y + rowHeight / 2;
-        ctx.font = font(22, 800);
-        ctx.fillText(String(row.no), columns[0].x, middle);
-        ctx.font = font(21, 700);
-        ctx.fillText(fit(ctx, row.name, columns[1].width), columns[1].x, middle);
-        ctx.font = font(20, 400);
-        ctx.fillText(row.kind, columns[2].x, middle);
-        ctx.font = font(20, row.status === '引き換え待ち' ? 800 : 400);
-        ctx.fillText(row.status, columns[3].x, middle);
-        ctx.font = font(20, 400);
-        const winner = row.winner ? `${row.winner}（${row.winnerId}）${row.at ? ' ' + row.at : ''}` : '—';
-        ctx.fillText(fit(ctx, winner, columns[4].width), columns[4].x, middle);
-        y += rowHeight;
+        ctx.font = font(38, 800);
+        const count = String(counts[label] ?? 0);
+        ctx.fillText(count, x + 20, cardsTop + 64);
+        const countWidth = ctx.measureText(count).width;
+        ctx.font = font(19, 700);
+        ctx.fillText('個', x + 26 + countWidth, cardsTop + 68);
+    });
+
+    // 表の見出し
+    y = tableTop;
+    ctx.fillStyle = '#1f2a44';
+    ctx.font = font(19, 700);
+    ctx.fillText('No.', columns.no.x, y + tableHeadHeight / 2);
+    ctx.fillText('景品名', columns.name.x, y + tableHeadHeight / 2);
+    ctx.fillText('種類', columns.kind.x, y + tableHeadHeight / 2);
+    ctx.fillText('状態', columns.status.x, y + tableHeadHeight / 2);
+    ctx.fillText('獲得者', columns.winner.x, y + tableHeadHeight / 2);
+    ctx.fillRect(pad, y + tableHeadHeight - 3, width - pad * 2, 3);
+    y += tableHeadHeight;
+
+    rows.forEach((row) => {
+        const style = STATUS_STYLE[row.status] ?? STATUS_STYLE.未獲得;
+        if (style.row) {
+            ctx.fillStyle = style.row;
+            ctx.fillRect(pad, y, width - pad * 2, row.height);
+        }
+        ctx.fillStyle = '#e6dfcc';
+        ctx.fillRect(pad, y + row.height - 1, width - pad * 2, 1);
+
+        const textColor = row.isMiss ? '#8a90a2' : '#1f2a44';
+        const middle = y + row.height / 2;
+
+        ctx.fillStyle = textColor;
+        ctx.font = font(21, row.isMiss ? 400 : 800);
+        ctx.fillText(String(row.no), columns.no.x, middle);
+
+        ctx.font = font(21, row.isMiss ? 400 : 700);
+        const firstLine = middle - ((row.lines.length - 1) * lineHeight) / 2;
+        row.lines.forEach((line, index) => ctx.fillText(line, columns.name.x, firstLine + index * lineHeight));
+
+        ctx.font = font(18, 400);
+        ctx.fillStyle = row.isMiss ? '#8a90a2' : '#4a5571';
+        ctx.fillText(row.kind, columns.kind.x, middle);
+
+        // 状態は色つきの札に、名前も書く
+        ctx.font = font(17, row.status === '引き換え待ち' ? 800 : 700);
+        const pillWidth = Math.min(columns.status.width, ctx.measureText(row.status).width + 22);
+        roundRect(ctx, columns.status.x, middle - 15, pillWidth, 30, 15, style.fill);
+        ctx.fillStyle = style.text;
+        ctx.fillText(row.status, columns.status.x + 11, middle + 1);
+
+        ctx.font = font(18, 400);
+        ctx.fillStyle = row.isMiss ? '#8a90a2' : '#1f2a44';
+        const winner = row.winner ? `${row.winner} · ${row.winnerId}${row.at ? ' · ' + row.at : ''}` : '—';
+        ctx.fillText(fit(ctx, winner, columns.winner.width), columns.winner.x, middle);
+
+        y += row.height;
     });
 
     ctx.font = font(18, 400);
     ctx.fillStyle = '#4a5571';
-    ctx.fillText('つながらなくなったら、この控えと景品リスト（紙）で続けます。参加者には見せないでください。', pagePadding, y + 34);
+    ctx.fillText('つながらなくなったら、この控えと景品リスト（紙）で続けます。参加者には見せないでください。', pad, y + 38);
 
     return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+}
+
+function roundRect(ctx, x, y, w, h, r, fill) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.fill();
+}
+
+/**
+ * 幅に合わせて折り返す（maxLines 行まで。はみ出す分は最後の行を「…」にする）。日本語は1文字ずつ、英数字も1文字ずつ区切る。
+ */
+function wrap(ctx, text, maxWidth, maxLines) {
+    const lines = [];
+    let current = '';
+    for (const char of Array.from(text)) {
+        if (ctx.measureText(current + char).width > maxWidth && current !== '') {
+            lines.push(current);
+            current = char;
+            if (lines.length === maxLines) {
+                break;
+            }
+        } else {
+            current += char;
+        }
+    }
+    if (lines.length < maxLines) {
+        lines.push(current);
+
+        return lines;
+    }
+    // 入りきらなかった：最後の行を「…」で終える
+    const consumed = Array.from(lines.join('')).length;
+    if (consumed < Array.from(text).length) {
+        lines[maxLines - 1] = fit(ctx, lines[maxLines - 1] + Array.from(text).slice(consumed).join(''), maxWidth);
+    }
+
+    return lines.slice(0, maxLines);
 }
 
 /**
