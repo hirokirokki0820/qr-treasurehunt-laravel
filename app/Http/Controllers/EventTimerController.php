@@ -33,6 +33,10 @@ class EventTimerController extends Controller
         Gate::authorize('manage', $event);
         abort_unless($event->hasTimeLimit() && $event->timerState() !== TimerState::Running, 409);
 
+        if ($event->needsScheduleToStart()) {
+            return back()->withErrors(['schedule' => '本番を始める前に、「イベントを編集」から開催の予定を入れてください。']);
+        }
+
         $event->startTimer();
 
         return back()->with('status', "宝探しをスタートしました（{$event->time_limit_minutes}分）。");

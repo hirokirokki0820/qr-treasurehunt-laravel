@@ -9,10 +9,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'description', 'max_prizes_per_participant', 'count_misses_toward_limit', 'time_limit_minutes'])]
+#[Fillable(['name', 'description', 'max_prizes_per_participant', 'count_misses_toward_limit', 'time_limit_minutes', 'scheduled_start_at', 'scheduled_minutes'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
@@ -22,6 +23,8 @@ class Event extends Model
     {
         static::creating(function (Event $event): void {
             $event->join_token ??= Str::random(40);
+            // これから作るイベントは、本番の前に開催予定が必要（前からあるイベントは false のまま）
+            $event->requires_schedule ??= true;
         });
     }
 
@@ -232,6 +235,62 @@ class Event extends Model
     }
 
     /**
+     * 開催予定の「開催時間」の選択肢（分 => 表示）。
+     *
+     * @var array<int, string>
+     */
+    public const SCHEDULE_LENGTHS = [
+        30 => '30分',
+        60 => '1時間',
+        90 => '1時間30分',
+        120 => '2時間',
+        150 => '2時間30分',
+        180 => '3時間',
+        240 => '4時間',
+        300 => '5時間',
+        360 => '6時間',
+        480 => '8時間',
+    ];
+
+    /**
+     * 開催予定が入っているか。
+     */
+    public function hasSchedule(): bool
+    {
+        return $this->scheduled_start_at !== null && $this->scheduled_minutes !== null;
+    }
+
+    public function scheduledEndAt(): ?Carbon
+    {
+        return $this->hasSchedule() ? $this->scheduled_start_at->copy()->addMinutes($this->scheduled_minutes) : null;
+    }
+
+    /**
+     * 本番（宝探しスタート、お試しでない参加の受付）を始めるのに、開催予定が足りないか。お試しモードは予定なしで使える。
+     */
+    public function needsScheduleToStart(): bool
+    {
+        return $this->requires_schedule && ! $this->hasSchedule() && ! $this->trial_mode;
+    }
+
+    /**
+     * 「11月29日（日）10:00〜12:00」の形。日をまたぐときは終わりにも日付を付ける。
+     */
+    public function scheduleLabel(): ?string
+    {
+        if (! $this->hasSchedule()) {
+            return null;
+        }
+
+        $start = $this->scheduled_start_at;
+        $end = $this->scheduledEndAt();
+        $weekday = ['日', '月', '火', '水', '木', '金', '土'];
+        $day = fn (Carbon $at) => $at->format('n月j日').'（'.$weekday[$at->dayOfWeek].'）';
+
+        return $day($start).$start->format('H:i').'〜'.($end->isSameDay($start) ? '' : $day($end)).$end->format('H:i');
+    }
+
+    /**
      * 主催者の画面で、どの操作を先に見せるかを決めるための、イベントの段階。
      *   trial  … お試しモード中
      *   prep   … 準備中（まだ誰も参加していなくて、タイマーも動かしていない）
@@ -375,6 +434,9 @@ class Event extends Model
             'ends_at' => 'datetime',
             'prize_list_printed_at' => 'datetime',
             'trial_mode' => 'boolean',
+            'scheduled_start_at' => 'datetime',
+            'scheduled_minutes' => 'integer',
+            'requires_schedule' => 'boolean',
         ];
     }
 }

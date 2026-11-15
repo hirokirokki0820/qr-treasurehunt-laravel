@@ -21,10 +21,17 @@
                 <p class="text-xs text-ink-soft">スタートすると、参加者の画面で自動的にカウントダウンが始まります</p>
             </div>
         </div>
-        <form method="POST" action="{{ route('events.timer.start', $event) }}" class="max-sm:w-full" data-confirm="宝探しをスタートします（制限時間 {{ $event->time_limit_minutes }}分）。参加者の画面でカウントダウンが始まります。よろしいですか？">
-            @csrf
-            <button type="submit" class="btn-primary w-full gap-2 px-6 py-3 text-lg"><x-icon name="play" class="h-5 w-5" />宝探しスタート</button>
-        </form>
+        @if ($event->needsScheduleToStart())
+            <div class="max-sm:w-full">
+                <button type="button" class="btn-primary w-full cursor-not-allowed gap-2 px-6 py-3 text-lg" disabled data-start-blocked><x-icon name="play" class="h-5 w-5" />宝探しスタート</button>
+                <p class="mt-1 text-xs font-bold text-ruby">開催の予定を入れると押せるようになります</p>
+            </div>
+        @else
+            <form method="POST" action="{{ route('events.timer.start', $event) }}" class="max-sm:w-full" data-confirm="宝探しをスタートします（制限時間 {{ $event->time_limit_minutes }}分）。参加者の画面でカウントダウンが始まります。よろしいですか？">
+                @csrf
+                <button type="submit" class="btn-primary w-full gap-2 px-6 py-3 text-lg"><x-icon name="play" class="h-5 w-5" />宝探しスタート</button>
+            </form>
+        @endif
     </section>
 @elseif ($state === TimerState::Running)
     <section class="card mt-6 border-sea py-4 shadow-[4px_4px_0_0_var(--color-sea)]" data-timer data-state="running" data-remaining="{{ $remaining }}" data-total="{{ $total }}" data-version="{{ $status['version'] }}" data-status-url="{{ route('events.timer.status', $event) }}" data-now-ms="{{ $status['now_ms'] }}" data-ends-ms="{{ $status['ends_ms'] }}">

@@ -21,6 +21,11 @@
         @if ($event->description)
             <p class="mt-1 whitespace-pre-line text-ink-soft">{{ $event->description }}</p>
         @endif
+        @if ($event->hasSchedule())
+            <p class="mt-2 inline-flex flex-wrap items-center gap-1.5 text-sm font-bold" data-schedule-label><x-icon name="timer" class="h-4 w-4" />開催予定：{{ $event->scheduleLabel() }}</p>
+        @elseif ($event->requires_schedule)
+            <p class="mt-2 inline-flex rounded-full bg-ruby/10 px-3 py-1 text-xs font-bold text-ruby" data-schedule-missing>開催予定：未入力</p>
+        @endif
         <p class="mt-2 inline-flex flex-wrap items-center gap-1 rounded-full bg-ink/8 px-3 py-1 text-xs font-bold text-ink-soft">
             獲得上限：{{ $event->prizeLimitLabel() ?? 'なし' }} ・ 制限時間：{{ $event->hasTimeLimit() ? $event->time_limit_minutes.'分' : 'なし' }}
         </p>
@@ -39,6 +44,14 @@
         @include('events.show.setup', ['open' => false])
     @else
         {{-- 準備中・お試し中：景品の登録 → 印刷 → お試し → 本番のスタート の順 --}}
+        @if ($event->needsScheduleToStart())
+            {{-- 案B：作るときは空欄でもよいが、本番の前には開催予定が必要 --}}
+            <section class="mt-6 rounded-2xl border-2 border-ink bg-gold/20 px-5 py-4" data-schedule-notice>
+                <p class="font-black">本番の前に、開催の予定を入れてください</p>
+                <p class="mt-1 text-sm text-ink-soft">予定を入れるまでは「宝探しスタート」を押せず、参加用QRからの参加も受け付けません。お試しモードは今のままで使えます。</p>
+                <a href="{{ route('events.edit', $event) }}#schedule" class="btn-primary mt-3 text-sm">開催の予定を入れる</a>
+            </section>
+        @endif
         <x-plan-limit :event="$event" />
         @if ($phase === 'trial')
             <x-trial-mode :event="$event" />

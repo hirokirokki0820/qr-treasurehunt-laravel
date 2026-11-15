@@ -14,7 +14,9 @@
             <p class="mt-3 rounded-xl bg-gold/25 px-3 py-2 text-sm font-bold">いまはお試しモードです（{{ \App\Models\Event::TRIAL_PARTICIPANT_LIMIT }}人まで）</p>
         @endif
 
-        @if ($full && $event->trial_mode)
+        @if ($notOpen)
+            <p class="mt-6 rounded-xl bg-ink/8 px-3 py-3 text-sm font-bold" role="status" data-join-not-open>このイベントは、まだ参加の受付を始めていません。主催者の案内をお待ちください。</p>
+        @elseif ($full && $event->trial_mode)
             <p class="mt-6 rounded-xl bg-ruby/10 px-3 py-3 text-sm font-bold text-ruby" role="alert">お試しモードの参加人数（{{ \App\Models\Event::TRIAL_PARTICIPANT_LIMIT }}人）に達しています。本番が始まるまでお待ちください。</p>
         @elseif ($full)
             <p class="mt-6 rounded-xl bg-ruby/10 px-3 py-3 text-sm font-bold text-ruby" role="alert">このイベントは、参加できる人数（{{ $event->participantLimit() }}人）に達しています。主催者にお知らせください。</p>

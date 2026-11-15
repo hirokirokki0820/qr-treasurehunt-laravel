@@ -57,6 +57,7 @@
                             <span class="text-sm text-ink-soft">{{ $event->created_at->format('Y/m/d') }} 作成</span>
                         </div>
                         <dl class="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+                            <div class="basis-full"><dt class="inline text-ink-soft">開催予定</dt> <dd @class(['inline font-bold', 'text-ruby' => ! $event->hasSchedule() && $event->requires_schedule])>{{ $event->scheduleLabel() ?? ($event->requires_schedule ? '未入力' : '—') }}</dd></div>
                             <div><dt class="inline text-ink-soft">景品数</dt> <dd class="inline font-bold">{{ $event->winning_prizes_count }}個</dd></div>
                             <div><dt class="inline text-ink-soft">残り</dt> <dd class="inline font-bold">{{ $event->remaining_prizes_count }}個</dd></div>
                             <div><dt class="inline text-ink-soft">参加者</dt> <dd class="inline font-bold">{{ $event->participants_count }}人</dd></div>

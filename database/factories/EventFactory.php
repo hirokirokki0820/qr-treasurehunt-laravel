@@ -22,7 +22,15 @@ class EventFactory extends Factory
             'description' => fake()->sentence(),
             'max_prizes_per_participant' => null,
             'count_misses_toward_limit' => false,
+            // テストでは、ふだんは開催予定が入っている（予定なしのテストでは withoutSchedule() を使う）
+            'scheduled_start_at' => now()->addDay()->setTime(10, 0),
+            'scheduled_minutes' => 120,
         ];
+    }
+
+    public function withoutSchedule(): static
+    {
+        return $this->state(fn (array $attributes) => ['scheduled_start_at' => null, 'scheduled_minutes' => null]);
     }
 
     /**

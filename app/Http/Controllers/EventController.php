@@ -55,7 +55,7 @@ class EventController extends Controller
             : null;
 
         $event = DB::transaction(function () use ($request, $source): Event {
-            $event = $request->user()->events()->create($request->safe()->only(['name', 'description', 'max_prizes_per_participant', 'count_misses_toward_limit', 'time_limit_minutes']));
+            $event = $request->user()->events()->create([...$request->safe()->only(['name', 'description', 'max_prizes_per_participant', 'count_misses_toward_limit', 'time_limit_minutes']), ...$request->schedule()]);
 
             if ($source !== null && $request->boolean('copy_prizes')) {
                 $event->copyPrizesFrom($source);
@@ -138,7 +138,14 @@ class EventController extends Controller
     {
         Gate::authorize('manage', $event);
 
-        $event->update($request->safe()->only(['name', 'description', 'max_prizes_per_participant', 'count_misses_toward_limit', 'time_limit_minutes']));
+        $schedule = $request->schedule();
+
+        // 本番が始まったあとは、予定を消せない（変えることはできる）。消すと、新しい参加を受け付けなくなるため
+        if ($schedule['scheduled_start_at'] === null && $event->hasSchedule() && $event->requires_schedule && in_array($event->phase(), ['live', 'closed'], true)) {
+            return back()->withInput()->withErrors(['scheduled_date' => '開催中のイベントは、開催予定を空欄にできません。日時を変えるときは、新しい日時を入れてください。']);
+        }
+
+        $event->update([...$request->safe()->only(['name', 'description', 'max_prizes_per_participant', 'count_misses_toward_limit', 'time_limit_minutes']), ...$schedule]);
 
         return redirect()->route('events.show', $event)->with('status', 'イベントを更新しました。');
     }

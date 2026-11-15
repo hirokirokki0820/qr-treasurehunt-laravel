@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\KobappScheduleController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\KobappLoginController;
 use App\Http\Controllers\EventController;
@@ -18,6 +19,9 @@ use App\Http\Middleware\RememberGuestVisitor;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+
+// kobapp.jp の管理画面（開催カレンダー）からの問い合わせ。サーバーどうしの署名で確かめる（くわしくは KobappScheduleController）
+Route::get('api/kobapp/schedule', KobappScheduleController::class)->middleware('throttle:60,1')->name('api.kobapp.schedule');
 
 /*
 | 主催者（/host 以下。参加者とは別のセッションクッキーを使う）

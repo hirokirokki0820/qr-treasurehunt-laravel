@@ -21,13 +21,18 @@ class JoinController extends Controller
             return redirect()->route('play.index');
         }
 
-        return view('join.create', ['event' => $event, 'full' => $event->isFull()]);
+        return view('join.create', ['event' => $event, 'full' => $event->isFull(), 'notOpen' => $event->needsScheduleToStart()]);
     }
 
     public function store(Request $request, Event $event): RedirectResponse
     {
         if ($this->currentParticipant()?->event_id === $event->id) {
             return redirect()->route('play.index');
+        }
+
+        // 開催予定が入るまでは、本番の参加を受け付けない（お試しモードは受け付ける）
+        if ($event->needsScheduleToStart()) {
+            return back()->withInput()->withErrors(['nickname' => 'このイベントは、まだ参加の受付を始めていません。主催者の案内をお待ちください。']);
         }
 
         $validated = $request->validate([
