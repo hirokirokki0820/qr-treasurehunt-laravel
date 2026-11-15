@@ -35,10 +35,59 @@ class KobappLoginController extends Controller
             return redirect()->route('login')->with('error', $e->getMessage());
         }
 
-        // 主催者は、ログアウトするまで30日ログインしたまま（長さは config/auth.php の remember）
-        Auth::guard('web')->login($user, remember: true);
-        $request->session()->regenerate();
+        // 別の主催者がログインしたままなら、その人はこのブラウザーからだけログアウトさせる
+        // （ほかの端末の「ログインしたまま」は消さない）。セッションも作り直し、前の人の情報を残さない
+        $intended = $request->session()->pull('url.intended');
+        $guard = Auth::guard('web');
+        if ($guard->check() && $guard->id() !== $user->getKey()) {
+            $guard->logoutCurrentDevice();
+        }
+        $request->session()->invalidate();
 
-        return redirect()->intended(route('events.index'));
+        // 主催者は、ログアウトするまで30日ログインしたまま（長さは config/auth.php の remember）
+        $guard->login($user, remember: true);
+        $request->session()->regenerateToken();
+
+        return redirect()->to(is_string($intended) ? $intended : route('events.index'));
+    }
+
+    /**
+     * kobapp.jp でログアウトしたとき、kobapp.jp からここを通って戻る。このブラウザーの主催者もログアウトする。
+     *
+     * 他人が勝手にログアウトさせられないよう、kobapp.jp との共通の合言葉で作った署名（5分以内）があるときだけ動く。
+     * 戻り先は kobapp.jp のトップに決めてある（どこへでも飛ばせる入口にはしない）。
+     */
+    public function logout(Request $request): RedirectResponse
+    {
+        if (self::validLogoutSignature($request->query('ts'), $request->query('sig'))) {
+            $guard = Auth::guard('web');
+            if ($guard->check()) {
+                $guard->logoutCurrentDevice();
+            }
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        return redirect()->away(rtrim((string) config('services.kobapp.url'), '/').'/');
+    }
+
+    /**
+     * kobapp.jp 側の署名と同じ作り方（hash_hmac('sha256', "logout\n".時刻, 合言葉)）。
+     */
+    public static function logoutSignature(string $timestamp): string
+    {
+        return hash_hmac('sha256', "logout\n".$timestamp, (string) config('services.kobapp.client_secret'));
+    }
+
+    private static function validLogoutSignature(mixed $timestamp, mixed $signature): bool
+    {
+        if (! is_string($timestamp) || ! ctype_digit($timestamp) || ! is_string($signature) || (string) config('services.kobapp.client_secret') === '') {
+            return false;
+        }
+        if (abs(now()->getTimestamp() - (int) $timestamp) > 300) {
+            return false;
+        }
+
+        return hash_equals(self::logoutSignature($timestamp), $signature);
     }
 }

@@ -32,9 +32,14 @@ Route::prefix('host')->group(function () {
     Route::middleware('guest:web')->group(function () {
         // 主催者は「kobapp でログイン」で入る（アカウント名とパスワードでのログインと登録はやめた）
         Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
-        Route::get('auth/kobapp', [KobappLoginController::class, 'redirect'])->middleware('throttle:20,1')->name('login.kobapp');
-        Route::get('auth/kobapp/callback', [KobappLoginController::class, 'callback'])->middleware('throttle:20,1')->name('login.kobapp.callback');
     });
+
+    // 「kobapp でログイン」は、ログイン中でも通す。kobapp.jp で別のアカウントに切り替えてから開いたとき、
+    // 前の人のままにならず、今 kobapp.jp でログインしている人に入れ替わるようにするため（くわしくは KobappLoginController）
+    Route::get('auth/kobapp', [KobappLoginController::class, 'redirect'])->middleware('throttle:20,1')->name('login.kobapp');
+    Route::get('auth/kobapp/callback', [KobappLoginController::class, 'callback'])->middleware('throttle:20,1')->name('login.kobapp.callback');
+    // kobapp.jp でログアウトしたとき、こちらもいっしょにログアウトする（kobapp.jp の署名つきで来たときだけ）
+    Route::get('auth/kobapp/logout', [KobappLoginController::class, 'logout'])->middleware('throttle:20,1')->name('login.kobapp.logout');
 
     Route::middleware('auth:web')->group(function () {
         Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
