@@ -7,6 +7,7 @@ import { setUpPrizeForm } from './prize-form';
 import { renderQrCodes } from './qr-render';
 import { setUpScanner } from './qr-scanner';
 import { setUpSelectionMode } from './selection-mode';
+import { setUpSnapshot } from './snapshot';
 import { limitTableRows } from './table-scroll';
 import { setUpTimers } from './timer';
 
@@ -16,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setUpScanner();
     setUpBulkSelect();
     setUpPrizeForm();
+    setUpSnapshot();
     setUpSelectionMode();
     limitTableRows();
     scrollBreadcrumbsToCurrent();

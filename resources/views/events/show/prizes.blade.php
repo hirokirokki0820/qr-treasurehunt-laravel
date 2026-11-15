@@ -23,6 +23,26 @@
         <div class="flex flex-wrap items-center gap-2 group-data-selecting/select:hidden">
             {{-- 更新しても、絞り込みと一覧の位置はそのまま（同じURLだと読み込み直さないので、時刻を付ける） --}}
             <a href="{{ route('events.show', array_filter([$event, 'stock' => $stock, 't' => now()->timestamp])) }}#prize-list" class="btn-secondary min-h-10 gap-1.5 px-3 py-1.5 text-sm" title="最新の獲得状況を表示します" data-refresh-list><x-icon name="refresh" class="h-4 w-4" />更新</a>
+            @if (in_array($event->phase(), ['live', 'closed'], true) && $snapshotPrizes->isNotEmpty())
+                {{-- 景品の獲得状況を1枚の画像にして保存する（つながらなくなったときや、データが消えたときの控え）。画像はスマホの中で作る --}}
+                <span class="inline-flex flex-col items-end gap-0.5" data-snapshot data-snapshot-key="qr-snapshot-{{ $event->id }}">
+                    <button type="button" class="btn-secondary min-h-10 gap-1.5 px-3 py-1.5 text-sm data-[due]:bg-gold/40 data-[due]:ring-2 data-[due]:ring-gold-deep" data-snapshot-button><x-icon name="camera" class="h-4 w-4" />控えを保存</button>
+                    <span class="text-[11px] text-ink-soft" data-snapshot-last>まだ保存していません</span>
+                </span>
+                <script type="application/json" data-snapshot-data>@json([
+                    'event' => $event->name,
+                    'phase' => $event->phase() === 'live' ? '開催中' : '締切後',
+                    'prizes' => $snapshotPrizes->map(fn ($prize) => [
+                        'no' => $prize->number,
+                        'name' => $prize->name,
+                        'kind' => $prize->is_miss ? 'ハズレ' : '当たり',
+                        'status' => $prize->statusLabel(),
+                        'winner' => $prize->participant?->nickname,
+                        'winnerId' => $prize->participant?->displayId(),
+                        'at' => $prize->acquired_at?->format('H:i'),
+                    ])->values(),
+                ])</script>
+            @endif
             @if ($prizes->isNotEmpty())
                 <button type="button" class="btn-secondary min-h-10 gap-1.5 px-3 py-1.5 text-sm" data-selection-enter><x-icon name="select" class="h-4 w-4" />選択・削除</button>
             @endif

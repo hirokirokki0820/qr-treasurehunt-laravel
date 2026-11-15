@@ -96,9 +96,15 @@ class EventController extends Controller
             'participants',
         ]);
 
+        // 「控えを保存」の画像には、絞り込みに関係なく全部の景品を入れる
+        $snapshotPrizes = ($filters['stock'] ?? null) === null
+            ? $prizes
+            : $event->prizes()->with('participant')->orderBy('number')->get();
+
         return view('events.show', [
             'event' => $event,
             'prizes' => $prizes,
+            'snapshotPrizes' => $snapshotPrizes,
             'filters' => $filters,
             'duplicatedNicknames' => $event->duplicatedNicknames(),
         ]);

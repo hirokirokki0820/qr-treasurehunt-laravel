@@ -803,3 +803,31 @@ test('the participant pages lead back to the event and on to the next scan', fun
         ->assertSee('次の引き換えQRを読み取る')
         ->assertSee('イベントのページに戻る');
 });
+
+test('the snapshot button appears on the day and carries every prize', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user)->create(['time_limit_minutes' => 30]);
+    $participant = Participant::factory()->for($event)->create(['nickname' => '<b>たろう</b>']);
+    Prize::factory()->for($event)->takenBy($participant)->create(['name' => '見つかった景品']);
+    Prize::factory()->for($event)->create(['name' => 'まだの景品']);
+
+    $this->actingAs($user);
+
+    // 準備中は出さない
+    $fresh = Event::factory()->for($user)->create();
+    Prize::factory()->for($fresh)->create();
+    $this->get(route('events.show', $fresh))->assertDontSee('data-snapshot-button', false);
+
+    $event->startTimer();
+    $response = $this->get(route('events.show', [$event, 'stock' => 'unredeemed']))
+        ->assertSee('data-snapshot-button', false)
+        ->assertSee('控えを保存')
+        ->assertDontSee('<b>たろう</b>', false);
+
+    // 絞り込んでいても、控えには全部の景品が入る
+    preg_match('/<script type="application\/json" data-snapshot-data>(.*?)<\/script>/s', $response->getContent(), $m);
+    $data = json_decode($m[1], true);
+    expect(collect($data['prizes'])->pluck('name')->all())->toBe(['見つかった景品', 'まだの景品'])
+        ->and($data['prizes'][0]['status'])->toBe('引き換え待ち')
+        ->and($data['prizes'][0]['winner'])->toBe('<b>たろう</b>');
+});
