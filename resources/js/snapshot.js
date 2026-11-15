@@ -172,13 +172,13 @@ function download(file) {
 const STATUS_STYLE = {
     未獲得: { fill: '#eceae4', text: '#4a5571' },
     引き換え待ち: { fill: '#fbe3a6', text: '#1f2a44', row: '#fdf3d6' },
-    引き換え済み: { fill: '#d6ece9', text: '#1f5a55' },
+    引き換え済み: { fill: '#d6ece9', text: '#1f5a55', row: '#f1f2f4', muted: true },
     対象外: { fill: '#f1efea', text: '#8a90a2' },
 };
 
 /**
  * 控えの画像を描く。幅 1080px。上に集計のカード、その下に No.／景品名／種類／状態／獲得者 の表。
- * 景品名がいちばん広い列で、長い名前は2行まで折り返す（それより長いときは「…」）。ハズレの行は灰色で、太字にしない。
+ * 景品名がいちばん広い列で、長い名前も省略せずに折り返す。引き換え待ちの行は黄色、引き換え済みの行は薄い灰色、ハズレの行は灰色の細字。
  */
 function drawSnapshot(data, now, pageLabel, counts, stale) {
     const width = 1080;
@@ -203,9 +203,14 @@ function drawSnapshot(data, now, pageLabel, counts, stale) {
     const rows = data.prizes.map((row) => {
         const isMiss = row.kind === 'ハズレ';
         measure.font = font(21, isMiss ? 400 : 700);
-        const lines = wrap(measure, row.name, columns.name.width, 2);
+        // 控えなので、景品名は省略せず全文を折り返して出す
+        const lines = wrap(measure, row.name, columns.name.width, Infinity);
+        measure.font = font(18, 400);
+        const winnerText = row.winner ? `${row.winner} · ${row.winnerId}${row.at ? ' · ' + row.at : ''}` : '—';
+        const winnerLines = wrap(measure, winnerText, columns.winner.width, Infinity);
+        const lineCount = Math.max(lines.length, winnerLines.length);
 
-        return { ...row, isMiss, lines, height: Math.max(52, 20 + lines.length * lineHeight) };
+        return { ...row, isMiss, lines, winnerLines, height: Math.max(52, 20 + lineCount * lineHeight) };
     });
 
     const headerBottom = (data.schedule ? 212 : 182) + (stale ? 34 : 0);
@@ -292,7 +297,9 @@ function drawSnapshot(data, now, pageLabel, counts, stale) {
         ctx.fillStyle = '#e6dfcc';
         ctx.fillRect(pad, y + row.height - 1, width - pad * 2, 1);
 
-        const textColor = row.isMiss ? '#8a90a2' : '#1f2a44';
+        // ハズレは灰色、引き換え済みは少し落ち着いた色にして、引き換え待ちがいちばん目立つようにする
+        const textColor = row.isMiss ? '#8a90a2' : (style.muted ? '#4f5875' : '#1f2a44');
+        const subColor = row.isMiss ? '#8a90a2' : (style.muted ? '#6b7389' : '#4a5571');
         const middle = y + row.height / 2;
 
         ctx.fillStyle = textColor;
@@ -304,7 +311,7 @@ function drawSnapshot(data, now, pageLabel, counts, stale) {
         row.lines.forEach((line, index) => ctx.fillText(line, columns.name.x, firstLine + index * lineHeight));
 
         ctx.font = font(18, 400);
-        ctx.fillStyle = row.isMiss ? '#8a90a2' : '#4a5571';
+        ctx.fillStyle = subColor;
         ctx.fillText(row.kind, columns.kind.x, middle);
 
         // 状態は色つきの札に、名前も書く
@@ -315,9 +322,9 @@ function drawSnapshot(data, now, pageLabel, counts, stale) {
         ctx.fillText(row.status, columns.status.x + 11, middle + 1);
 
         ctx.font = font(18, 400);
-        ctx.fillStyle = row.isMiss ? '#8a90a2' : '#1f2a44';
-        const winner = row.winner ? `${row.winner} · ${row.winnerId}${row.at ? ' · ' + row.at : ''}` : '—';
-        ctx.fillText(fit(ctx, winner, columns.winner.width), columns.winner.x, middle);
+        ctx.fillStyle = row.isMiss ? '#8a90a2' : (style.muted ? '#6b7389' : '#1f2a44');
+        const firstWinnerLine = middle - ((row.winnerLines.length - 1) * lineHeight) / 2;
+        row.winnerLines.forEach((line, index) => ctx.fillText(line, columns.winner.x, firstWinnerLine + index * lineHeight));
 
         y += row.height;
     });
