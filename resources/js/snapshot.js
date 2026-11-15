@@ -1,7 +1,7 @@
 /**
  * 「控えを保存」：景品の獲得状況を1枚の画像（PNG）にして保存する。
  * つながらなくなったときや、データが消えたときに、誰が何を見つけたかを確かめるための控え。
- * 画像はスマホの中で作り、サーバーには送らない。スマホでは共有の画面（「画像を保存」で写真へ）、PCではダウンロード。
+ * 画像はスマホの中で作り、サーバーには送らない。スマホ・タブレットでは共有の画面（「画像を保存」で写真へ）、PC（Mac を含む）ではダウンロード。
  * 最後に保存した時刻をこのブラウザに覚えておき、15分たったらボタンを目立たせる。
  */
 const REMIND_AFTER_MS = 15 * 60 * 1000;
@@ -60,7 +60,10 @@ export function setUpSnapshot() {
 
     // 共有の画面を開く。開けなければダウンロードにする。保存できたら true
     const deliver = async (files, title) => {
-        if (navigator.canShare?.({ files })) {
+        // 共有の画面（「画像を保存」で写真へ）は、指で操作するスマホ・タブレットだけ。
+        // Mac などのPCでは共有の画面に「保存」がないので、そのままダウンロードする
+        const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+        if (isTouchDevice && navigator.canShare?.({ files })) {
             try {
                 await navigator.share({ files, title });
 
