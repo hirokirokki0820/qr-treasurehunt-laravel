@@ -6,6 +6,7 @@
  */
 const REMIND_AFTER_MS = 15 * 60 * 1000;
 const ROWS_PER_IMAGE = 250;
+const NO_LINE_START = ')）」』】〕］}、。，．,.・！？!?ー～ぁぃぅぇぉっゃゅょァィゥェォッャュョ';
 
 export function setUpSnapshot() {
     const root = document.querySelector('[data-snapshot]');
@@ -355,7 +356,8 @@ function wrap(ctx, text, maxWidth, maxLines) {
     const lines = [];
     let current = '';
     for (const char of Array.from(text)) {
-        if (ctx.measureText(current + char).width > maxWidth && current !== '') {
+        // 閉じかっこや句読点は行の頭に来ないよう、前の行に残す（少しはみ出しても読みやすさを優先）
+        if (ctx.measureText(current + char).width > maxWidth && current !== '' && !NO_LINE_START.includes(char)) {
             lines.push(current);
             current = char;
             if (lines.length === maxLines) {
