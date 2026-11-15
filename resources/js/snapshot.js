@@ -221,8 +221,8 @@ function drawSnapshot(data, now, pageLabel, counts, stale) {
 
     const headerBottom = (data.schedule ? 212 : 182) + (stale ? 34 : 0);
     // 集計は当たりの景品だけ。ハズレは数えないので、カードの上にそう書いておく（合計が行の数と合わなくても迷わないように）
-    const cardsLabelY = headerBottom + 8;
-    const cardsTop = headerBottom + 32;
+    const cardsLabelY = headerBottom + 18;
+    const cardsTop = headerBottom + 42;
     const cardsHeight = 92;
     const tableTop = cardsTop + cardsHeight + 28;
     const tableHeadHeight = 44;
