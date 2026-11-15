@@ -6,6 +6,7 @@ use App\Enums\JoinQrPrintSize;
 use App\Enums\QrPrintSize;
 use App\Http\Requests\EventRequest;
 use App\Models\Event;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -96,15 +97,9 @@ class EventController extends Controller
             'participants',
         ]);
 
-        // 「控えを保存」の画像には、絞り込みに関係なく全部の景品を入れる
-        $snapshotPrizes = ($filters['stock'] ?? null) === null
-            ? $prizes
-            : $event->prizes()->with('participant')->orderBy('number')->get();
-
         return view('events.show', [
             'event' => $event,
             'prizes' => $prizes,
-            'snapshotPrizes' => $snapshotPrizes,
             'filters' => $filters,
             'duplicatedNicknames' => $event->duplicatedNicknames(),
         ]);
@@ -234,6 +229,16 @@ class EventController extends Controller
             'event' => $event,
             'prizes' => $event->prizes()->with('participant')->orderBy('number')->get(),
         ]);
+    }
+
+    /**
+     * 「控えを保存」を押したときに、その時点の獲得状況を返す（つながらないときは、ページを開いたときの状態で作る）。
+     */
+    public function snapshot(Event $event): JsonResponse
+    {
+        Gate::authorize('manage', $event);
+
+        return response()->json($event->snapshotData())->header('Cache-Control', 'no-store');
     }
 
     /**

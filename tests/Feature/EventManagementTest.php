@@ -831,3 +831,23 @@ test('the snapshot button appears on the day and carries every prize', function 
         ->and($data['prizes'][0]['status'])->toBe('引き換え待ち')
         ->and($data['prizes'][0]['winner'])->toBe('<b>たろう</b>');
 });
+
+test('the snapshot asks the server for the latest state when it is pressed', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user)->create();
+    $participant = Participant::factory()->for($event)->create(['nickname' => 'たろう']);
+    $prize = Prize::factory()->for($event)->create(['name' => 'あとで見つかる景品']);
+
+    $this->actingAs($user);
+    $this->getJson(route('events.snapshot', $event))->assertOk()->assertJsonPath('prizes.0.status', '未獲得');
+
+    // ページを開いたあとに見つかっても、押した時点の状態が返る
+    $prize->forceFill(['participant_id' => $participant->id, 'acquired_at' => now()])->save();
+    $this->getJson(route('events.snapshot', $event))
+        ->assertOk()
+        ->assertJsonPath('prizes.0.status', '引き換え待ち')
+        ->assertJsonPath('prizes.0.winner', 'たろう')
+        ->assertHeader('Cache-Control', 'no-store, private');
+
+    $this->actingAs(User::factory()->create())->getJson(route('events.snapshot', $event))->assertForbidden();
+});

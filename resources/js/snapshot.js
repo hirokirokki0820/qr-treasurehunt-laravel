@@ -18,7 +18,6 @@ export function setUpSnapshot() {
     const button = root.querySelector('[data-snapshot-button]');
     const last = root.querySelector('[data-snapshot-last]');
     const key = root.dataset.snapshotKey;
-    const data = JSON.parse(dataTag.textContent);
 
     const readLast = () => {
         try {
@@ -44,47 +43,100 @@ export function setUpSnapshot() {
         button.toggleAttribute('data-due', due);
     };
 
+    const label = button.querySelector('[data-snapshot-label]');
+    const defaultLabel = label?.textContent ?? '';
+    let latest = JSON.parse(dataTag.textContent);
+    let pendingFiles = null;
+
+    const markSaved = (savedAt) => {
+        try {
+            window.localStorage.setItem(key, String(savedAt.getTime()));
+        } catch {
+            // 覚えておけなくても、保存はできている
+        }
+        showLast();
+    };
+
+    // 共有の画面を開く。開けなければダウンロードにする。保存できたら true
+    const deliver = async (files, title) => {
+        if (navigator.canShare?.({ files })) {
+            try {
+                await navigator.share({ files, title });
+
+                return true;
+            } catch (error) {
+                if (error?.name === 'AbortError') {
+                    return false;
+                }
+                // 画像を作っているあいだに「押した直後」の扱いが切れると、iPhone では共有の画面を開けない。
+                // そのときは、もう一度押してもらえば、作った画像をすぐ共有する
+                if (error?.name === 'NotAllowedError') {
+                    pendingFiles = { files, title };
+                    if (label) {
+                        label.textContent = '画像ができました・押して保存';
+                    }
+
+                    return null;
+                }
+            }
+        }
+        files.forEach(download);
+
+        return true;
+    };
+
     button.addEventListener('click', async () => {
+        if (pendingFiles) {
+            const { files, title } = pendingFiles;
+            pendingFiles = null;
+            if (label) {
+                label.textContent = defaultLabel;
+            }
+            if (await deliver(files, title)) {
+                markSaved(new Date());
+            }
+
+            return;
+        }
+
         button.disabled = true;
 
         try {
-            const now = new Date();
+            // 押した時点の最新の獲得状況を取りに行く。つながらないときは、ページを開いたときの状態で作り、そう書いておく
+            let stale = false;
+            try {
+                const controller = new AbortController();
+                const timer = window.setTimeout(() => controller.abort(), 6000);
+                const response = await fetch(root.dataset.snapshotUrl, { headers: { Accept: 'application/json' }, credentials: 'same-origin', cache: 'no-store', signal: controller.signal });
+                window.clearTimeout(timer);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                latest = await response.json();
+            } catch {
+                stale = true;
+            }
+
+            const dataAt = new Date(latest.at);
             // 時刻は、アプリのほかの表示と同じ日本時間にそろえる
-            const stamp = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(now).replace(/[-: ]/g, '').replace(/^(\d{8})(\d{4})$/, '$1-$2');
+            const stamp = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(dataAt).replace(/[-: ]/g, '').replace(/^(\d{8})(\d{4})$/, '$1-$2');
             // スマホは大きすぎる画像を作れないので、景品が多いときは何枚かに分ける
-            const pages = chunk(data.prizes, ROWS_PER_IMAGE);
-            const counts = data.prizes.reduce((sum, row) => {
+            const pages = chunk(latest.prizes, ROWS_PER_IMAGE);
+            const counts = latest.prizes.reduce((sum, row) => {
                 sum[row.status] = (sum[row.status] ?? 0) + 1;
 
                 return sum;
             }, {});
             const files = [];
             for (const [index, rows] of pages.entries()) {
-                const blob = await drawSnapshot({ ...data, prizes: rows }, now, pages.length > 1 ? `（${index + 1}/${pages.length}）` : '', counts);
+                const blob = await drawSnapshot({ ...latest, prizes: rows }, dataAt, pages.length > 1 ? `（${index + 1}/${pages.length}）` : '', counts, stale);
                 const suffix = pages.length > 1 ? `-${index + 1}` : '';
                 files.push(new File([blob], `宝探しの控え-${stamp}${suffix}.png`, { type: 'image/png' }));
             }
 
-            if (navigator.canShare?.({ files })) {
-                try {
-                    await navigator.share({ files, title: `${data.event}の控え` });
-                } catch (error) {
-                    // 共有の画面を閉じただけのときは、保存していないので時刻を残さない
-                    if (error?.name === 'AbortError') {
-                        return;
-                    }
-                    files.forEach(download);
-                }
-            } else {
-                files.forEach(download);
+            if (await deliver(files, `${latest.event}の控え`)) {
+                markSaved(new Date());
             }
-
-            try {
-                window.localStorage.setItem(key, String(now.getTime()));
-            } catch {
-                // 覚えておけなくても、保存はできている
-            }
-            showLast();
         } finally {
             button.disabled = false;
         }
@@ -117,7 +169,7 @@ function download(file) {
 /**
  * 控えの画像を描く。幅 1080px、景品1件につき1行。
  */
-function drawSnapshot(data, now, pageLabel, counts) {
+function drawSnapshot(data, now, pageLabel, counts, stale) {
     const width = 1080;
     const pagePadding = 48;
     const rowHeight = 46;
@@ -145,6 +197,11 @@ function drawSnapshot(data, now, pageLabel, counts) {
     ctx.fillStyle = '#4a5571';
     const when = now.toLocaleString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
     ctx.fillText(`${when} 時点・${data.phase}　未獲得 ${counts['未獲得'] ?? 0}／引き換え待ち ${counts['引き換え待ち'] ?? 0}／引き換え済み ${counts['引き換え済み'] ?? 0}`, pagePadding, 150);
+    if (stale) {
+        ctx.fillStyle = '#b9402b';
+        ctx.font = font(20, 700);
+        ctx.fillText('つながらないため、ページを開いた時点の状態です（最新ではありません）', pagePadding, 185);
+    }
 
     const columns = [
         { label: 'No.', x: pagePadding, width: 80 },

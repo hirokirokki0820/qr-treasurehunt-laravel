@@ -235,6 +235,29 @@ class Event extends Model
     }
 
     /**
+     * 「控えを保存」の画像に入れる、全部の景品の獲得状況。at はこの状態を読んだ時刻（日本時間）。
+     *
+     * @return array{event: string, phase: string, at: string, prizes: list<array<string, mixed>>}
+     */
+    public function snapshotData(): array
+    {
+        return [
+            'event' => $this->name,
+            'phase' => $this->phase() === 'live' ? '開催中' : ($this->phase() === 'closed' ? '締切後' : ''),
+            'at' => now()->toIso8601String(),
+            'prizes' => $this->prizes()->with('participant')->orderBy('number')->get()->map(fn (Prize $prize) => [
+                'no' => $prize->number,
+                'name' => $prize->name,
+                'kind' => $prize->is_miss ? 'ハズレ' : '当たり',
+                'status' => $prize->statusLabel(),
+                'winner' => $prize->participant?->nickname,
+                'winnerId' => $prize->participant?->displayId(),
+                'at' => $prize->acquired_at?->format('H:i'),
+            ])->values()->all(),
+        ];
+    }
+
+    /**
      * 開催予定の「開催時間」の選択肢（分 => 表示）。
      *
      * @var array<int, string>
