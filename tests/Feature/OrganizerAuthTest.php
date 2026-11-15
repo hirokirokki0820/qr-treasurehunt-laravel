@@ -244,3 +244,21 @@ test('organizers stay logged in for thirty days', function () {
     expect($cookie)->not->toBeNull()
         ->and(abs($cookie->getExpiresTime() - now()->addDays(30)->getTimestamp()))->toBeLessThan(120);
 });
+
+test('logging out sits inside the menu and asks first', function () {
+    $user = User::factory()->create();
+    $event = \App\Models\Event::factory()->for($user)->create();
+
+    $this->actingAs($user)->get(route('events.index'))
+        ->assertSee('data-organizer-menu', false)
+        ->assertSee('data-logout-form', false)
+        ->assertSee('ログアウトしますか？')
+        ->assertDontSee('開催中のイベントがあります');
+
+    \App\Models\Participant::factory()->for($event)->create();
+    $this->get(route('events.index'))->assertSee('開催中のイベントがあります');
+
+    // 確認は画面の側。送れば、これまでどおりログアウトする
+    $this->post(route('logout'))->assertRedirect(route('login'));
+    $this->assertGuest();
+});
