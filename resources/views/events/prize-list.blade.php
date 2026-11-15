@@ -42,9 +42,10 @@
 
         <ol class="mt-3 grid gap-x-6 gap-y-1 text-xs sm:grid-cols-2 print:grid-cols-2 print:text-[8.5pt]">
             <li><span class="font-black">1.</span> つながらなくなったら、主催者のスマホでほかのサイトが開くか確かめる（5分まで）</li>
-            <li><span class="font-black">2.</span> 直らなければ「見つけたQRカードを取って受付に持ってきてね」と全員に伝える</li>
-            <li><span class="font-black">3.</span> カードのお宝Noをこの表で探し、当たりなら景品を渡す。カードは回収し「渡した人」に名前を書く</li>
-            <li><span class="font-black">4.</span> 途中で直っても、紙のまま最後まで続ける</li>
+            <li><span class="font-black">2.</span> アプリで見つけた子に画面を見せてもらい、そのNo.の「渡した人」に名前を書いて景品を渡す</li>
+            <li><span class="font-black">3.</span> 「見つけたQRカードを取って受付に持ってきてね」と全員に伝える（アプリで見つけた分も上限に数える）</li>
+            <li><span class="font-black">4.</span> カードのお宝Noをこの表で探し、当たりなら景品を渡す。「渡した人」に名前があるNo.は「からっぽ」。カードは回収する</li>
+            <li><span class="font-black">5.</span> 途中で直っても、紙のまま最後まで続ける</li>
         </ol>
         @if ($event->hasPrizeLimit())
             <p class="mt-2 text-xs font-bold print:text-[8.5pt]">1人が持ってこられる枚数：{{ $event->prizeLimitLabel() }}</p>
