@@ -38,7 +38,7 @@ export function setUpSnapshot() {
             return;
         }
 
-        const time = new Date(at).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+        const time = new Date(at).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
         const due = Date.now() - at > REMIND_AFTER_MS;
         last.textContent = due ? `最後の控え ${time}・そろそろ保存を` : `最後の控え ${time}`;
         button.toggleAttribute('data-due', due);
@@ -49,7 +49,8 @@ export function setUpSnapshot() {
 
         try {
             const now = new Date();
-            const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+            // 時刻は、アプリのほかの表示と同じ日本時間にそろえる
+            const stamp = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(now).replace(/[-: ]/g, '').replace(/^(\d{8})(\d{4})$/, '$1-$2');
             // スマホは大きすぎる画像を作れないので、景品が多いときは何枚かに分ける
             const pages = chunk(data.prizes, ROWS_PER_IMAGE);
             const counts = data.prizes.reduce((sum, row) => {
@@ -102,10 +103,6 @@ function chunk(list, size) {
     return pages.length ? pages : [[]];
 }
 
-function pad(n) {
-    return String(n).padStart(2, '0');
-}
-
 function download(file) {
     const url = URL.createObjectURL(file);
     const link = document.createElement('a');
@@ -146,7 +143,7 @@ function drawSnapshot(data, now, pageLabel, counts) {
     ctx.fillText(fit(ctx, data.event, width - pagePadding * 2), pagePadding, 100);
     ctx.font = font(22, 400);
     ctx.fillStyle = '#4a5571';
-    const when = now.toLocaleString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' });
+    const when = now.toLocaleString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
     ctx.fillText(`${when} 時点・${data.phase}　未獲得 ${counts['未獲得'] ?? 0}／引き換え待ち ${counts['引き換え待ち'] ?? 0}／引き換え済み ${counts['引き換え済み'] ?? 0}`, pagePadding, 150);
 
     const columns = [
