@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\KobappLoginController;
 use App\Models\Event;
 use App\Models\Participant;
 use App\Models\User;
@@ -264,3 +265,49 @@ test('logging out sits inside the menu and asks first', function () {
     $this->post(route('logout'))->assertRedirect(route('login'));
     $this->assertGuest();
 });
+
+test('opening the app from kobapp with another account switches to that account', function () {
+    $first = User::factory()->create(['kobapp_user_id' => '41']);
+    $this->actingAs($first);
+
+    fakeKobappToken(['sub' => '42', 'email' => 'second@example.com', 'email_verified' => true]);
+    $query = startKobappLogin();
+
+    $this->get(route('login.kobapp.callback', ['code' => 'the-code', 'state' => $query['state']]))
+        ->assertRedirect(route('events.index'));
+
+    $second = User::firstWhere('kobapp_user_id', '42');
+    $this->assertAuthenticatedAs($second);
+    expect($first->fresh()->remember_token)->toBe($first->remember_token);
+});
+
+test('a logged in organizer can still start the kobapp login', function () {
+    $this->actingAs(User::factory()->create());
+
+    startKobappLogin();
+});
+
+test('logging out of kobapp with a valid signature logs the organizer out here too', function () {
+    $this->actingAs(User::factory()->create());
+    $timestamp = (string) now()->getTimestamp();
+
+    $this->get(route('login.kobapp.logout', ['ts' => $timestamp, 'sig' => KobappLoginController::logoutSignature($timestamp)]))
+        ->assertRedirect('https://kobapp.example.test/');
+    $this->assertGuest();
+});
+
+test('the kobapp logout link does nothing without a valid fresh signature', function (callable $params) {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $this->get(route('login.kobapp.logout', $params()))->assertRedirect('https://kobapp.example.test/');
+    $this->assertAuthenticatedAs($user);
+})->with([
+    'no signature' => [fn () => []],
+    'wrong signature' => [fn () => ['ts' => (string) now()->getTimestamp(), 'sig' => str_repeat('0', 64)]],
+    'too old' => [function () {
+        $old = (string) now()->subMinutes(10)->getTimestamp();
+
+        return ['ts' => $old, 'sig' => KobappLoginController::logoutSignature($old)];
+    }],
+]);
