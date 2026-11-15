@@ -197,7 +197,8 @@ function drawSnapshot(data, now, pageLabel, counts, stale) {
     columns.winner.x = width - pad - columns.winner.width;
     columns.status.x = columns.winner.x - columns.status.width - 12;
     columns.kind.x = columns.status.x - columns.kind.width - 8;
-    columns.name.width = columns.kind.x - columns.name.x - 16;
+    // 行の頭に来ない文字を前の行に残すぶん、右に少し余白をとる
+    columns.name.width = columns.kind.x - columns.name.x - 40;
 
     // 行の高さを先に決める（景品名の行数で変わる）
     const measure = document.createElement('canvas').getContext('2d');
