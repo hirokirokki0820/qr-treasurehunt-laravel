@@ -6,11 +6,17 @@
     ];
     $back = ['available' => 'remaining', 'unredeemed' => 'unredeemed'][$stock] ?? null;
     $badge = 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold whitespace-nowrap';
+    // 色は「控えを保存」の画像・メールとそろえる（resources/js/snapshot.js の STATUS_STYLE）。
+    // いちばん目で追いたい「引き換え待ち」を黄色の行で目立たせ、引き換え済みは青緑の札＋薄い灰色の行で「終わった」ことを示す
     $statusClass = [
-        '未獲得' => 'bg-sea/12 text-sea',
-        '引き換え待ち' => 'bg-gold/45 text-ink ring-1 ring-gold-deep/50',
-        '引き換え済み' => 'bg-ink/10 text-ink-soft',
-        '対象外' => 'bg-transparent text-ink-soft',
+        '未獲得' => 'bg-[#eceae4] text-[#4a5571]',
+        '引き換え待ち' => 'bg-[#fbe3a6] text-ink',
+        '引き換え済み' => 'bg-[#d6ece9] text-[#1f5a55]',
+        '対象外' => 'bg-transparent text-[#8a90a2]',
+    ];
+    $rowClass = [
+        '引き換え待ち' => 'bg-[#fdf3d6]',
+        '引き換え済み' => 'bg-[#f1f2f4]',
     ];
 @endphp
 
@@ -96,8 +102,8 @@
         <table class="prize-table mt-3 w-full text-left text-sm">
             <thead>
                 <tr class="border-b-2 border-ink">
-                    <th class="hidden w-10 py-2 pr-2 group-data-selecting/select:table-cell"><span class="sr-only">選択</span></th>
-                    <th class="w-14 py-2 pr-3">No.</th>
+                    <th class="hidden w-10 py-2 pr-2 pl-2 group-data-selecting/select:table-cell"><span class="sr-only">選択</span></th>
+                    <th class="w-14 py-2 pr-3 pl-2">No.</th>
                     <th class="py-2 pr-3">景品名</th>
                     <th class="w-48 py-2 pr-3">種類・状態</th>
                     <th class="w-56 py-2 pr-3">獲得者</th>
@@ -107,14 +113,14 @@
             <tbody>
                 @foreach ($prizes as $prize)
                     @php($status = $prize->statusLabel())
-                    <tr class="prize-row border-b border-ink/15 group-data-selecting/select:cursor-pointer has-[:checked]:bg-ruby/5" data-selection-card data-prize-status="{{ $status }}">
-                        <td class="prize-cell-chk hidden py-2 pr-2 group-data-selecting/select:table-cell">
+                    <tr class="prize-row border-b border-ink/15 {{ $rowClass[$status] ?? '' }} {{ $prize->is_miss ? 'text-ink-soft/80' : '' }} group-data-selecting/select:cursor-pointer has-[:checked]:bg-ruby/5" data-selection-card data-prize-status="{{ $status }}">
+                        <td class="prize-cell-chk hidden py-2 pr-2 pl-2 group-data-selecting/select:table-cell">
                             <label class="-m-2 inline-flex cursor-pointer p-2.5">
                                 <input type="checkbox" name="prize_ids[]" value="{{ $prize->id }}" form="bulk-delete-form" class="h-5 w-5 accent-ruby" data-bulk-select-item data-bulk-label="No.{{ $prize->number }} {{ $prize->name }}" aria-label="No.{{ $prize->number }}「{{ $prize->name }}」を選択">
                             </label>
                         </td>
-                        <td class="prize-cell-num py-2 pr-3 font-black tabular-nums"><span class="sm:hidden">No.</span>{{ $prize->number }}</td>
-                        <td class="prize-cell-name py-2 pr-3 font-bold [overflow-wrap:anywhere]">{{ $prize->name }}</td>
+                        <td class="prize-cell-num py-2 pr-3 pl-2 tabular-nums {{ $prize->is_miss ? 'font-medium' : 'font-black' }}"><span class="sm:hidden">No.</span>{{ $prize->number }}</td>
+                        <td class="prize-cell-name py-2 pr-3 [overflow-wrap:anywhere] {{ $prize->is_miss ? 'font-medium' : 'font-bold' }}">{{ $prize->name }}</td>
                         <td class="prize-cell-meta py-2 pr-3">
                             <span class="flex flex-wrap items-center gap-1.5">
                                 @if ($prize->is_miss)
