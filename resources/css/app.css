@@ -98,7 +98,7 @@
             'chk .    who  who';
         align-items: center;
         row-gap: 0.25rem;
-        padding: 0.75rem 0;
+        padding: 0.75rem 0.5rem 0.75rem 0;
     }
 
     .prize-row > td {
