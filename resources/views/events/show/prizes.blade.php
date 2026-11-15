@@ -23,20 +23,22 @@
         <div class="flex flex-wrap items-center gap-2 group-data-selecting/select:hidden">
             {{-- 更新しても、絞り込みと一覧の位置はそのまま（同じURLだと読み込み直さないので、時刻を付ける） --}}
             <a href="{{ route('events.show', array_filter([$event, 'stock' => $stock, 't' => now()->timestamp])) }}#prize-list" class="btn-secondary min-h-10 gap-1.5 px-3 py-1.5 text-sm" title="最新の獲得状況を表示します" data-refresh-list><x-icon name="refresh" class="h-4 w-4" />更新</a>
-            @if (in_array($event->phase(), ['live', 'closed'], true) && $event->prizes_count > 0)
-                {{-- 景品の獲得状況を1枚の画像にして保存する（つながらなくなったときや、データが消えたときの控え）。画像はスマホの中で作る --}}
-                <span class="inline-flex flex-col items-end gap-0.5" data-snapshot data-snapshot-key="qr-snapshot-{{ $event->id }}" data-snapshot-url="{{ route('events.snapshot', $event) }}">
-                    <button type="button" class="btn-secondary min-h-10 gap-1.5 px-3 py-1.5 text-sm data-[due]:bg-gold/40 data-[due]:ring-2 data-[due]:ring-gold-deep" data-snapshot-button><x-icon name="camera" class="h-4 w-4" /><span data-snapshot-label>控えを保存</span></button>
-                    <span class="text-[11px] text-ink-soft" data-snapshot-last>まだ保存していません</span>
-                </span>
-                @php($snapshotData = $event->snapshotData())
-                <script type="application/json" data-snapshot-data>@json($snapshotData)</script>
-            @endif
             @if ($prizes->isNotEmpty())
                 <button type="button" class="btn-secondary min-h-10 gap-1.5 px-3 py-1.5 text-sm" data-selection-enter><x-icon name="select" class="h-4 w-4" />選択・削除</button>
             @endif
         </div>
     </div>
+
+    @if (in_array($event->phase(), ['live', 'closed'], true) && $event->prizes_count > 0)
+        {{-- 景品の獲得状況を1枚の画像にして保存する（つながらなくなったときや、データが消えたときの控え）。画像はスマホの中で作る。
+             「最後の控え」の文の長さでボタンの並びが崩れないよう、更新・選択とは別の行に置く --}}
+        <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 group-data-selecting/select:hidden" data-snapshot data-snapshot-key="qr-snapshot-{{ $event->id }}" data-snapshot-url="{{ route('events.snapshot', $event) }}">
+            <button type="button" class="btn-secondary min-h-10 gap-1.5 px-3 py-1.5 text-sm data-[due]:bg-gold/40 data-[due]:ring-2 data-[due]:ring-gold-deep" data-snapshot-button><x-icon name="camera" class="h-4 w-4" /><span data-snapshot-label>控えを保存</span></button>
+            <span class="text-xs text-ink-soft" data-snapshot-last>まだ保存していません</span>
+        </div>
+        @php($snapshotData = $event->snapshotData())
+        <script type="application/json" data-snapshot-data>@json($snapshotData)</script>
+    @endif
 
     {{-- 絞り込み（一覧のすぐ上）。選んでいるものは塗りつぶしと「✓」で示す --}}
     <nav class="mt-4 flex flex-wrap gap-2 group-data-selecting/select:hidden" aria-label="景品の絞り込み">
