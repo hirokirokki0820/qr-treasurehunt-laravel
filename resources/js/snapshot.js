@@ -126,6 +126,7 @@ export function setUpSnapshot() {
             const stamp = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(dataAt).replace(/[-: ]/g, '').replace(/^(\d{8})(\d{4})$/, '$1-$2');
             // スマホは大きすぎる画像を作れないので、景品が多いときは何枚かに分ける
             const pages = chunk(latest.prizes, ROWS_PER_IMAGE);
+            const totalMisses = latest.prizes.filter((row) => row.kind === 'ハズレ').length;
             const counts = latest.prizes.reduce((sum, row) => {
                 sum[row.status] = (sum[row.status] ?? 0) + 1;
 
@@ -133,7 +134,7 @@ export function setUpSnapshot() {
             }, {});
             const files = [];
             for (const [index, rows] of pages.entries()) {
-                const blob = await drawSnapshot({ ...latest, prizes: rows }, dataAt, pages.length > 1 ? `（${index + 1}/${pages.length}）` : '', counts, stale);
+                const blob = await drawSnapshot({ ...latest, prizes: rows, missesOutsidePage: totalMisses - rows.filter((row) => row.kind === 'ハズレ').length }, dataAt, pages.length > 1 ? `（${index + 1}/${pages.length}）` : '', counts, stale);
                 const suffix = pages.length > 1 ? `-${index + 1}` : '';
                 files.push(new File([blob], `宝探しの控え-${stamp}${suffix}.png`, { type: 'image/png' }));
             }
@@ -219,7 +220,9 @@ function drawSnapshot(data, now, pageLabel, counts, stale) {
     });
 
     const headerBottom = (data.schedule ? 212 : 182) + (stale ? 34 : 0);
-    const cardsTop = headerBottom;
+    // 集計は当たりの景品だけ。ハズレは数えないので、カードの上にそう書いておく（合計が行の数と合わなくても迷わないように）
+    const cardsLabelY = headerBottom + 8;
+    const cardsTop = headerBottom + 32;
     const cardsHeight = 92;
     const tableTop = cardsTop + cardsHeight + 28;
     const tableHeadHeight = 44;
@@ -257,6 +260,11 @@ function drawSnapshot(data, now, pageLabel, counts, stale) {
         ctx.font = font(20, 700);
         ctx.fillText('つながらないため、ページを開いた時点の状態です（最新ではありません）', pad, y);
     }
+
+    const missCount = data.prizes.filter((row) => row.kind === 'ハズレ').length + (data.missesOutsidePage ?? 0);
+    ctx.fillStyle = '#4a5571';
+    ctx.font = font(18, 700);
+    ctx.fillText(`当たり景品の獲得状況${missCount > 0 ? `（ハズレ${missCount}個は数えていません）` : ''}`, pad, cardsLabelY);
 
     // 集計のカード（未獲得／引き換え待ち／引き換え済み）
     const cards = [
