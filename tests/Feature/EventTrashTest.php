@@ -28,7 +28,7 @@ test('a deleted event can be restored from the index with its prizes and partici
     expect($event->fresh()->trashed())->toBeFalse()
         ->and($prize->fresh()->participant_id)->toBe($participant->id);
     $this->get(route('events.show', $event))->assertOk();
-    $this->get(route('events.index'))->assertDontSee('最近削除したイベント');
+    $this->get(route('events.index'))->assertDontSee('data-trashed-events', false);
 });
 
 test('while an event is deleted its QR codes, join link, cards and participants stop working', function () {
