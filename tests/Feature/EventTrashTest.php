@@ -111,6 +111,9 @@ test('the event list folds when there are five to ten events and adds five at a 
     $response->assertSee('さらに2件を表示（残り2件）');
     expect(substr_count($response->getContent(), 'data-selection-card'))->toBe(10);
 
-    expect(substr_count($this->get(route('events.index', ['show' => 15]))->getContent(), 'data-selection-card'))->toBe(12)
+    $response = $this->get(route('events.index', ['show' => 15]));
+    $response->assertDontSee('data-show-more-events', false)->assertSee('data-close-events', false);
+    $this->get(route('events.index', ['show' => 10]))->assertDontSee('data-close-events', false);
+    expect(substr_count($response->getContent(), 'data-selection-card'))->toBe(12)
         ->and(substr_count($this->get(route('events.index', ['show' => -3]))->getContent(), 'data-selection-card'))->toBe(5);
 });
