@@ -61,6 +61,30 @@
     @apply block w-full rounded-xl border-2 border-ink/70 bg-white px-3 py-2 text-ink placeholder:text-ink-soft/50 focus:border-sea focus:ring-2 focus:ring-sea/30 focus:outline-none;
 }
 
+/*
+ * iPhone の Safari では、日付・時刻の入力欄が自分の幅を持っていて、枠からはみ出す。
+ * 見た目の飾りを外して枠の幅に合わせ、空のときも高さがつぶれないようにする。
+ */
+@layer base {
+    input[type='date'],
+    input[type='time'] {
+        min-width: 0;
+        min-height: 2.75rem;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+
+    input[type='date']::-webkit-date-and-time-value,
+    input[type='time']::-webkit-date-and-time-value {
+        text-align: left;
+    }
+
+    /* fieldset は中身より狭くならない決まりがあるので、はみ出しの元にならないようにする */
+    fieldset {
+        min-width: 0;
+    }
+}
+
 @utility label {
     @apply mb-1 block text-sm font-bold text-ink;
 }
