@@ -48,8 +48,9 @@ export function setUpBulkSelect() {
     };
 
     selectAll?.addEventListener('change', () => {
+        // 折りたたんで見えていないもの（閉じた <details> の中）は、知らないうちに選ばないようにする
         items.forEach((item) => {
-            item.checked = selectAll.checked;
+            item.checked = selectAll.checked && item.closest('details:not([open])') === null;
         });
         refresh();
     });

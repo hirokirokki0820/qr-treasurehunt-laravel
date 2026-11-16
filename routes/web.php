@@ -45,6 +45,7 @@ Route::prefix('host')->group(function () {
         Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
         Route::delete('events', [EventController::class, 'destroyMany'])->name('events.destroy-many');
+        Route::get('events/trash', [EventController::class, 'trash'])->name('events.trash');
         Route::post('events/{event}/restore', [EventController::class, 'restore'])->whereNumber('event')->name('events.restore');
         Route::resource('events', EventController::class);
         Route::get('events/{event}/qrcodes', [EventController::class, 'qrCodes'])->name('events.qrcodes');

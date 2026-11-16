@@ -28,9 +28,32 @@ class EventController extends Controller
 
         // 削除して30日たったものは、ここで本当に消す（決まった時刻に動かす仕組みがなくても消えるように）
         Event::purgeExpiredTrash();
-        $trashed = $request->user()->events()->onlyTrashed()->latest('deleted_at')->get();
 
-        return view('events.index', ['events' => $events, 'trashed' => $trashed]);
+        // 並べ方：4件までは全部。5〜10件は新しい4件を出して残りは折りたたむ。11件以上は5件ずつ「さらに表示」で足す
+        $total = $events->count();
+        $shown = match (true) {
+            $total <= 10 => $total,
+            default => min($total, max(5, (int) ceil(max(5, (int) $request->query('show', 5)) / 5) * 5)),
+        };
+
+        return view('events.index', [
+            'events' => $events->take($shown)->values(),
+            'total' => $total,
+            'foldAfter' => $total >= 5 && $total <= 10 ? 4 : null,
+            'trashedCount' => $request->user()->events()->onlyTrashed()->count(),
+        ]);
+    }
+
+    /**
+     * 最近削除したイベント（削除してから30日間は戻せる）。
+     */
+    public function trash(Request $request): View
+    {
+        Event::purgeExpiredTrash();
+
+        return view('events.trash', [
+            'trashed' => $request->user()->events()->onlyTrashed()->latest('deleted_at')->get(),
+        ]);
     }
 
     /**
@@ -161,7 +184,7 @@ class EventController extends Controller
 
         $event->delete();
 
-        return redirect()->route('events.index')->with('status', 'イベントを削除しました。'.Event::TRASH_DAYS.'日以内なら、下の「最近削除したイベント」から戻せます。');
+        return redirect()->route('events.index')->with('status', 'イベントを削除しました。'.Event::TRASH_DAYS.'日以内なら、「最近削除したイベント」から戻せます。');
     }
 
     /**
@@ -178,7 +201,7 @@ class EventController extends Controller
 
         $deletedCount = $request->user()->events()->whereIn('id', $validated['event_ids'])->delete();
 
-        return redirect()->route('events.index')->with('status', "選択したイベントを{$deletedCount}件削除しました。".Event::TRASH_DAYS.'日以内なら、下の「最近削除したイベント」から戻せます。');
+        return redirect()->route('events.index')->with('status', "選択したイベントを{$deletedCount}件削除しました。".Event::TRASH_DAYS.'日以内なら、「最近削除したイベント」から戻せます。');
     }
 
     /**
