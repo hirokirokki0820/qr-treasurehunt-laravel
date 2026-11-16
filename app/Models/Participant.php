@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\ParticipantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -24,6 +25,8 @@ class Participant extends Authenticatable
 
     protected static function booted(): void
     {
+        // 削除した（ゴミ箱の）イベントのものは、ないものとして扱う（QRを読んでも開かない・ログインも切れる）
+        static::addGlobalScope('activeEvent', fn (Builder $query) => $query->whereHas('event'));
         static::creating(function (Participant $participant): void {
             $participant->redeem_token ??= Str::random(40);
         });

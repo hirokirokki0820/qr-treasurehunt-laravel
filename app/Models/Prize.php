@@ -22,6 +22,8 @@ class Prize extends Model
 
     protected static function booted(): void
     {
+        // 削除した（ゴミ箱の）イベントのものは、ないものとして扱う（QRを読んでも開かない・ログインも切れる）
+        static::addGlobalScope('activeEvent', fn (Builder $query) => $query->whereHas('event'));
         static::creating(function (Prize $prize): void {
             $prize->token ??= Str::random(40);
             $prize->number ??= (int) static::query()->where('event_id', $prize->event_id)->max('number') + 1;

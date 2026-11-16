@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -19,6 +20,15 @@ class Event extends Model
     /** @use HasFactory<EventFactory> */
     use HasFactory;
 
+    /**
+     * 削除したイベントは、30日間は「最近削除したイベント」から戻せる。
+     * そのあいだ、景品のQR・参加用QR・参加者カード・参加者のログインは使えない（Prize と Participant の activeEvent）。
+     */
+    use SoftDeletes;
+
+    /** 削除したイベントを戻せる日数 */
+    public const TRASH_DAYS = 30;
+
     protected static function booted(): void
     {
         static::creating(function (Event $event): void {
@@ -26,6 +36,25 @@ class Event extends Model
             // これから作るイベントは、本番の前に開催予定が必要（前からあるイベントは false のまま）
             $event->requires_schedule ??= true;
         });
+    }
+
+    /**
+     * 削除してから30日たったイベントを、景品・参加者ごと本当に消す。消した件数を返す。
+     */
+    public static function purgeExpiredTrash(): int
+    {
+        $expired = static::onlyTrashed()->where('deleted_at', '<=', now()->subDays(self::TRASH_DAYS))->get();
+        $expired->each->forceDelete();
+
+        return $expired->count();
+    }
+
+    /**
+     * 完全に消える日（削除したイベントのとき）。
+     */
+    public function purgeAt(): ?Carbon
+    {
+        return $this->deleted_at?->copy()->addDays(self::TRASH_DAYS);
     }
 
     /**
