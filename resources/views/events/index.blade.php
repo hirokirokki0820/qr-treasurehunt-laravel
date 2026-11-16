@@ -12,7 +12,7 @@
                         <x-icon name="select" />
                         イベントを選択する
                     </button>
-                    <form id="bulk-delete-form" method="POST" action="{{ route('events.destroy-many') }}" class="hidden group-data-selecting/select:block" data-confirm="選択したイベントを削除します。景品と参加者の記録もすべて削除され、元に戻せません。よろしいですか？">
+                    <form id="bulk-delete-form" method="POST" action="{{ route('events.destroy-many') }}" class="hidden group-data-selecting/select:block" data-confirm="選択したイベントを削除します。削除したイベントのQRコードは使えなくなり、参加中の人もログアウトされます。30日以内なら「最近削除したイベント」から元に戻せます。よろしいですか？">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn-danger gap-1.5 whitespace-nowrap" data-bulk-delete-button disabled>
@@ -80,5 +80,27 @@
                 </div>
             @endforelse
         </div>
+
+        @if ($trashed->isNotEmpty())
+            {{-- 削除してから30日は戻せる。30日たつと、景品・参加者の記録ごと完全に消える --}}
+            <section class="mt-10 rounded-2xl border-2 border-dashed border-ink/30 bg-white/60 p-5 group-data-selecting/select:hidden" data-trashed-events>
+                <h2 class="text-lg font-black">最近削除したイベント（{{ $trashed->count() }}件）</h2>
+                <p class="mt-1 text-sm text-ink-soft">削除してから{{ \App\Models\Event::TRASH_DAYS }}日間は、景品・参加者・獲得の記録ごと元に戻せます。そのあいだも、QRコードや参加者カードは使えません。日がたつと完全に削除されます。</p>
+                <ul class="mt-3 divide-y divide-ink/10">
+                    @foreach ($trashed as $item)
+                        <li class="flex flex-wrap items-center justify-between gap-3 py-3">
+                            <span class="min-w-0">
+                                <span class="block font-bold [overflow-wrap:anywhere]">{{ $item->name }}</span>
+                                <span class="block text-xs text-ink-soft">{{ $item->deleted_at->format('n月j日 H:i') }} に削除・{{ $item->purgeAt()->format('n月j日') }} に完全に削除されます</span>
+                            </span>
+                            <form method="POST" action="{{ route('events.restore', $item->id) }}">
+                                @csrf
+                                <button type="submit" class="btn-secondary min-h-10 px-4 py-1.5 text-sm" data-restore-button>元に戻す</button>
+                            </form>
+                        </li>
+                    @endforeach
+                </ul>
+            </section>
+        @endif
     </div>
 </x-layouts.app>

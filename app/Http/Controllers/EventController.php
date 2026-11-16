@@ -26,7 +26,11 @@ class EventController extends Controller
             ->latest()
             ->get();
 
-        return view('events.index', ['events' => $events]);
+        // 削除して30日たったものは、ここで本当に消す（決まった時刻に動かす仕組みがなくても消えるように）
+        Event::purgeExpiredTrash();
+        $trashed = $request->user()->events()->onlyTrashed()->latest('deleted_at')->get();
+
+        return view('events.index', ['events' => $events, 'trashed' => $trashed]);
     }
 
     /**
@@ -157,7 +161,7 @@ class EventController extends Controller
 
         $event->delete();
 
-        return redirect()->route('events.index')->with('status', 'イベントを削除しました。');
+        return redirect()->route('events.index')->with('status', 'イベントを削除しました。'.Event::TRASH_DAYS.'日以内なら、下の「最近削除したイベント」から戻せます。');
     }
 
     /**
@@ -174,7 +178,21 @@ class EventController extends Controller
 
         $deletedCount = $request->user()->events()->whereIn('id', $validated['event_ids'])->delete();
 
-        return redirect()->route('events.index')->with('status', "選択したイベントを{$deletedCount}件削除しました。");
+        return redirect()->route('events.index')->with('status', "選択したイベントを{$deletedCount}件削除しました。".Event::TRASH_DAYS.'日以内なら、下の「最近削除したイベント」から戻せます。');
+    }
+
+    /**
+     * 削除したイベントを戻す（削除してから30日以内）。景品・参加者・獲得の記録も、消す前のまま戻る。
+     */
+    public function restore(Request $request, int $event): RedirectResponse
+    {
+        $trashed = $request->user()->events()->onlyTrashed()
+            ->where('deleted_at', '>', now()->subDays(Event::TRASH_DAYS))
+            ->findOrFail($event);
+
+        $trashed->restore();
+
+        return redirect()->route('events.index')->with('status', "「{$trashed->name}」を戻しました。");
     }
 
     /**

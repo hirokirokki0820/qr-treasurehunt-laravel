@@ -15,8 +15,8 @@
 
     <div class="card mt-8 border-ruby shadow-[4px_4px_0_0_var(--color-ruby)]">
         <h2 class="font-black text-ruby">イベントを削除</h2>
-        <p class="mt-1 text-sm text-ink-soft">景品と参加者の記録もすべて削除されます。元に戻せません。</p>
-        <form method="POST" action="{{ route('events.destroy', $event) }}" class="mt-4" data-confirm="「{{ $event->name }}」を削除します。よろしいですか？" data-confirm-again="本当に削除してよろしいですか？&#10;景品と参加者の記録もすべて消え、元に戻せません。">
+        <p class="mt-1 text-sm text-ink-soft">削除すると、QRコードや参加者カードは使えなくなり、参加中の人もログアウトされます。{{ \App\Models\Event::TRASH_DAYS }}日以内なら、イベント一覧の「最近削除したイベント」から元に戻せます。</p>
+        <form method="POST" action="{{ route('events.destroy', $event) }}" class="mt-4" data-confirm="「{{ $event->name }}」を削除します。よろしいですか？" data-confirm-again="本当に削除してよろしいですか？&#10;参加中の人はログアウトされます（30日以内ならイベント一覧から元に戻せます）。">
             @csrf
             @method('DELETE')
             <button type="submit" class="btn-danger">削除する</button>

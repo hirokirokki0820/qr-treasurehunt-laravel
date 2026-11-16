@@ -271,7 +271,7 @@ test('organizers can delete the selected events at once along with their prizes'
     $this->actingAs($user)
         ->delete(route('events.destroy-many'), ['event_ids' => [$first->id, $second->id]])
         ->assertRedirect(route('events.index'))
-        ->assertSessionHas('status', '選択したイベントを2件削除しました。');
+        ->assertSessionHas('status', '選択したイベントを2件削除しました。30日以内なら、下の「最近削除したイベント」から戻せます。');
 
     expect($user->events()->pluck('id')->all())->toBe([$kept->id])
         ->and(Prize::where('event_id', $first->id)->exists())->toBeFalse();
@@ -284,7 +284,7 @@ test('bulk deleting events ignores events owned by another organizer', function 
     $this->actingAs($user)
         ->delete(route('events.destroy-many'), ['event_ids' => [$foreign->id]])
         ->assertRedirect(route('events.index'))
-        ->assertSessionHas('status', '選択したイベントを0件削除しました。');
+        ->assertSessionHas('status', '選択したイベントを0件削除しました。30日以内なら、下の「最近削除したイベント」から戻せます。');
 
     expect($foreign->fresh())->not->toBeNull();
 });
