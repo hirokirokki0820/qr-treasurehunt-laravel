@@ -46,32 +46,8 @@
         @endif
 
         <div class="mt-4 space-y-4">
-            @forelse ($events as $event)
-                <div class="card flex items-stretch p-0 transition hover:-translate-y-0.5 group-data-selecting/select:cursor-pointer has-[:checked]:bg-ruby/5 has-[:checked]:ring-2 has-[:checked]:ring-ruby/40" data-selection-card>
-                    <label class="hidden cursor-pointer items-center pl-5 group-data-selecting/select:flex">
-                        <input type="checkbox" name="event_ids[]" value="{{ $event->id }}" form="bulk-delete-form" class="h-5 w-5 accent-ruby" data-bulk-select-item aria-label="「{{ $event->name }}」を選択">
-                    </label>
-                    <a href="{{ route('events.show', $event) }}" class="block flex-1 p-5">
-                        <div class="flex flex-wrap items-center justify-between gap-2">
-                            <h2 class="text-lg font-black">{{ $event->name }}</h2>
-                            <span class="text-sm text-ink-soft">{{ $event->created_at->format('Y/m/d') }} 作成</span>
-                        </div>
-                        <dl class="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
-                            <div class="basis-full"><dt class="inline text-ink-soft">開催予定</dt> <dd @class(['inline font-bold', 'text-ruby' => ! $event->hasSchedule() && $event->requires_schedule])>{{ $event->scheduleLabel() ?? ($event->requires_schedule ? '未入力' : '—') }}</dd></div>
-                            <div><dt class="inline text-ink-soft">景品数</dt> <dd class="inline font-bold">{{ $event->winning_prizes_count }}個</dd></div>
-                            <div><dt class="inline text-ink-soft">残り</dt> <dd class="inline font-bold">{{ $event->remaining_prizes_count }}個</dd></div>
-                            <div><dt class="inline text-ink-soft">参加者</dt> <dd class="inline font-bold">{{ $event->participants_count }}人</dd></div>
-                        </dl>
-                    </a>
-                    <div class="flex shrink-0 flex-col justify-center gap-2 border-l-2 border-dashed border-ink/15 p-3 group-data-selecting/select:hidden sm:px-4">
-                        <a href="{{ route('events.join-qrcode', $event) }}" class="inline-flex items-center justify-center gap-1.5 rounded-lg border-2 border-ink bg-white px-2.5 py-1.5 text-xs font-bold whitespace-nowrap shadow-[2px_2px_0_0_var(--color-ink)] transition hover:-translate-y-px hover:bg-gold/25 active:translate-y-0 active:shadow-none" title="参加用QRコードを印刷">
-                            <x-icon name="qr-code" class="h-4 w-4 shrink-0" />参加用QR
-                        </a>
-                        <a href="{{ route('events.qrcodes', $event) }}" class="inline-flex items-center justify-center gap-1.5 rounded-lg border-2 border-ink bg-white px-2.5 py-1.5 text-xs font-bold whitespace-nowrap shadow-[2px_2px_0_0_var(--color-ink)] transition hover:-translate-y-px hover:bg-gold/25 active:translate-y-0 active:shadow-none" title="お宝用QRコードを印刷">
-                            <x-icon name="qr-code" class="h-4 w-4 shrink-0" />お宝用QR
-                        </a>
-                    </div>
-                </div>
+            @forelse ($foldAfter ? $events->take($foldAfter) : $events as $event)
+                @include('events.index-card')
             @empty
                 <div class="card text-center">
                     <x-chest class="mx-auto h-16 w-16" />
@@ -79,28 +55,31 @@
                     <p class="text-sm text-ink-soft">「イベントを作成」から宝探しを準備しましょう。</p>
                 </div>
             @endforelse
+
+            @if ($foldAfter)
+                {{-- 5〜10件：新しい4件のほかは折りたたむ --}}
+                <details class="group/more space-y-4" data-more-events>
+                    <summary class="flex cursor-pointer list-none items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ink/30 bg-white/60 px-4 py-3 font-bold text-ink-soft hover:border-ink hover:text-ink [&::-webkit-details-marker]:hidden">
+                        <span class="group-open/more:hidden">残り{{ $events->count() - $foldAfter }}件を表示 ▼</span>
+                        <span class="hidden group-open/more:inline">閉じる ▲</span>
+                    </summary>
+                    @foreach ($events->slice($foldAfter) as $event)
+                        @include('events.index-card')
+                    @endforeach
+                </details>
+            @elseif ($events->count() < $total)
+                {{-- 11件以上：5件ずつ足していく（足したところへ移る） --}}
+                <a href="{{ route('events.index', ['show' => $events->count() + 5]) }}#event-{{ $events->last()->id }}" class="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ink/30 bg-white/60 px-4 py-3 font-bold text-ink-soft no-underline hover:border-ink hover:text-ink" data-show-more-events>
+                    さらに{{ min(5, $total - $events->count()) }}件を表示（残り{{ $total - $events->count() }}件）▼
+                </a>
+            @endif
         </div>
 
-        @if ($trashed->isNotEmpty())
-            {{-- 削除してから30日は戻せる。30日たつと、景品・参加者の記録ごと完全に消える --}}
-            <section class="mt-10 rounded-2xl border-2 border-dashed border-ink/30 bg-white/60 p-5 group-data-selecting/select:hidden" data-trashed-events>
-                <h2 class="text-lg font-black">最近削除したイベント（{{ $trashed->count() }}件）</h2>
-                <p class="mt-1 text-sm text-ink-soft">削除してから{{ \App\Models\Event::TRASH_DAYS }}日間は、景品・参加者・獲得の記録ごと元に戻せます。そのあいだも、QRコードや参加者カードは使えません。日がたつと完全に削除されます。</p>
-                <ul class="mt-3 divide-y divide-ink/10">
-                    @foreach ($trashed as $item)
-                        <li class="flex flex-wrap items-center justify-between gap-3 py-3">
-                            <span class="min-w-0">
-                                <span class="block font-bold [overflow-wrap:anywhere]">{{ $item->name }}</span>
-                                <span class="block text-xs text-ink-soft">{{ $item->deleted_at->format('n月j日 H:i') }} に削除・{{ $item->purgeAt()->format('n月j日') }} に完全に削除されます</span>
-                            </span>
-                            <form method="POST" action="{{ route('events.restore', $item->id) }}">
-                                @csrf
-                                <button type="submit" class="btn-secondary min-h-10 px-4 py-1.5 text-sm" data-restore-button>元に戻す</button>
-                            </form>
-                        </li>
-                    @endforeach
-                </ul>
-            </section>
+        @if ($trashedCount > 0)
+            <a href="{{ route('events.trash') }}" class="mt-8 flex items-center justify-center gap-1.5 text-sm font-bold text-sea underline underline-offset-2 group-data-selecting/select:hidden" data-trash-link>
+                <x-icon name="trash" class="h-4 w-4" />最近削除したイベント（{{ $trashedCount }}件）›
+            </a>
         @endif
+
     </div>
 </x-layouts.app>
