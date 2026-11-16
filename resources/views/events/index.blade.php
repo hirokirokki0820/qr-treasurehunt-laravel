@@ -72,6 +72,11 @@
                 <a href="{{ route('events.index', ['show' => $events->count() + 5]) }}#event-{{ $events->last()->id }}" class="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ink/30 bg-white/60 px-4 py-3 font-bold text-ink-soft no-underline hover:border-ink hover:text-ink" data-show-more-events>
                     さらに{{ min(5, $total - $events->count()) }}件を表示（残り{{ $total - $events->count() }}件）▼
                 </a>
+            @elseif ($total > 10)
+                {{-- 11件以上を出し切ったら、最初の5件に戻せる（5件目のところへ移る） --}}
+                <a href="{{ route('events.index') }}#event-{{ $events->get(4)->id }}" class="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ink/30 bg-white/60 px-4 py-3 font-bold text-ink-soft no-underline hover:border-ink hover:text-ink" data-close-events>
+                    閉じる ▲
+                </a>
             @endif
         </div>
 
