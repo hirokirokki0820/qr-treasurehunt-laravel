@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\TimerState;
 use Database\Factories\EventFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -105,7 +106,7 @@ class Event extends Model
         // 引き継ぐのは、このイベントに登録できる数まで（No.の小さい順）
         $limit = $this->prizeLimit();
         $prizes = $source->prizes()->orderBy('number')
-            ->when($limit !== null, fn (HasMany $query) => $query->limit(max(0, $limit - $this->prizes()->count())))
+            ->when($limit !== null, fn (Builder $query) => $query->limit(max(0, $limit - $this->prizes()->count())))
             ->get();
 
         foreach ($prizes as $prize) {
