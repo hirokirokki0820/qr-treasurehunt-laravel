@@ -2,15 +2,16 @@
 
 use App\Models\Event;
 use App\Models\Participant;
+use App\Models\Prize;
 use App\Models\User;
 
-test('organizers who are not monitors can let only three people join', function () {
+test('organizers who are not monitors can let up to twenty people join', function () {
     $owner = User::factory()->free()->create();
     $event = Event::factory()->for($owner)->create();
     Participant::factory()->count(User::FREE_PARTICIPANT_LIMIT)->for($event)->create();
 
-    $this->get(route('join', $event))->assertOk()->assertSee('参加できる人数（3人）に達しています');
-    $this->post(route('join.store', $event), ['nickname' => 'よにんめ'])->assertSessionHasErrors('nickname');
+    $this->get(route('join', $event))->assertOk()->assertSee('参加できる人数（20人）に達しています');
+    $this->post(route('join.store', $event), ['nickname' => 'にじゅういちにんめ'])->assertSessionHasErrors('nickname');
 
     expect($event->participants()->count())->toBe(User::FREE_PARTICIPANT_LIMIT);
     $this->assertGuest('participant');
@@ -58,8 +59,66 @@ test('cards are made only up to the limit of free organizers', function () {
     $owner = User::factory()->free()->create();
     $event = Event::factory()->for($owner)->create();
 
+    Participant::factory()->count(User::FREE_PARTICIPANT_LIMIT - 2)->for($event)->create();
+
     $this->actingAs($owner)->post(route('cards.store', $event), ['count' => 5])
-        ->assertSessionHas('status', fn (string $status) => str_contains($status, '3枚作りました') && str_contains($status, '参加できるのは3人まで'));
+        ->assertSessionHas('status', fn (string $status) => str_contains($status, '2枚作りました') && str_contains($status, '参加できるのは20人まで'));
 
     expect($event->participants()->count())->toBe(User::FREE_PARTICIPANT_LIMIT);
+});
+
+test('free organizers can register up to one hundred treasure qr codes including misses', function () {
+    $owner = User::factory()->free()->create();
+    $event = Event::factory()->for($owner)->create();
+    Prize::factory()->count(User::FREE_PRIZE_LIMIT - 2)->for($event)->create();
+    Prize::factory()->for($event)->create(['is_miss' => true]);
+
+    $this->actingAs($owner)->get(route('events.show', $event))
+        ->assertSee('お宝QR '.(User::FREE_PRIZE_LIMIT - 1).'／'.User::FREE_PRIZE_LIMIT.'枚');
+
+    $this->post(route('events.prizes.store', $event), ['name' => 'ひゃくこめ'])->assertRedirect();
+    expect($event->prizes()->count())->toBe(User::FREE_PRIZE_LIMIT);
+
+    $this->post(route('events.prizes.store', $event), ['name' => 'ひゃくいっこめ'])
+        ->assertRedirect(route('events.show', $event))
+        ->assertSessionHasErrors('prize');
+    $this->get(route('events.prizes.create', $event))->assertRedirect(route('events.show', $event));
+    expect($event->prizes()->count())->toBe(User::FREE_PRIZE_LIMIT);
+
+    $this->get(route('events.show', $event))->assertSee('data-prize-limit-reached', false);
+});
+
+test('monitors can register up to three hundred treasure qr codes and admins have no limit', function () {
+    expect(User::factory()->monitor()->create()->prizeLimit())->toBe(User::MONITOR_PRIZE_LIMIT)
+        ->and(User::factory()->create()->prizeLimit())->toBeNull();
+});
+
+test('copying prizes from a past event stops at the limit', function () {
+    $owner = User::factory()->free()->create();
+    $source = Event::factory()->for($owner)->create();
+    Prize::factory()->count(User::FREE_PRIZE_LIMIT + 5)->for($source)->create();
+
+    $this->actingAs($owner)->post(route('events.store'), ['name' => '引き継ぎ', 'copy_from' => $source->id, 'copy_prizes' => '1'])->assertRedirect();
+
+    $copy = $owner->events()->where('name', '引き継ぎ')->firstOrFail();
+    expect($copy->prizes()->count())->toBe(User::FREE_PRIZE_LIMIT)
+        ->and($copy->prizes()->max('number'))->toBe($source->prizes()->orderBy('number')->skip(User::FREE_PRIZE_LIMIT - 1)->value('number'));
+});
+
+test('an account can have up to fifty events', function () {
+    $owner = User::factory()->free()->create();
+    Event::factory()->count(User::EVENT_LIMIT)->for($owner)->create();
+
+    $this->actingAs($owner)->get(route('events.create'))->assertRedirect(route('events.index'));
+    $this->post(route('events.store'), ['name' => 'ごじゅういっけんめ'])
+        ->assertRedirect(route('events.index'))
+        ->assertSessionHasErrors('event');
+    expect($owner->events()->count())->toBe(User::EVENT_LIMIT);
+
+    $owner->events()->first()->delete();
+    $this->get(route('events.create'))->assertOk();
+
+    $admin = User::factory()->create();
+    Event::factory()->count(User::EVENT_LIMIT)->for($admin)->create();
+    $this->actingAs($admin)->get(route('events.create'))->assertOk();
 });

@@ -7,14 +7,19 @@ use App\Models\Event;
 use App\Models\Prize;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class PrizeController extends Controller
 {
-    public function create(Event $event): View
+    public function create(Event $event): View|RedirectResponse
     {
         Gate::authorize('manage', $event);
+
+        if ($event->isPrizeFull()) {
+            return $this->prizeLimitReached($event);
+        }
 
         return view('prizes.create', ['event' => $event, 'prize' => new Prize]);
     }
@@ -23,7 +28,16 @@ class PrizeController extends Controller
     {
         Gate::authorize('manage', $event);
 
-        $prize = $event->prizes()->create($request->validated());
+        // 上限の確認と登録を1つにまとめて、同時に送られても上限を超えないようにする
+        $prize = DB::transaction(function () use ($request, $event): ?Prize {
+            $locked = Event::query()->lockForUpdate()->findOrFail($event->id);
+
+            return $locked->isPrizeFull() ? null : $locked->prizes()->create($request->validated());
+        });
+
+        if ($prize === null) {
+            return $this->prizeLimitReached($event);
+        }
 
         $message = "景品 No.{$prize->number}「{$prize->name}」を登録しました。";
 
@@ -103,6 +117,16 @@ class PrizeController extends Controller
         $deletedCount = $event->prizes()->whereIn('id', $validated['prize_ids'])->delete();
 
         return redirect()->route('events.show', $event)->with('status', "選択した景品を{$deletedCount}件削除しました。");
+    }
+
+    /**
+     * お宝QRの上限に達したときに、イベントのページへ戻して知らせる。
+     */
+    private function prizeLimitReached(Event $event): RedirectResponse
+    {
+        return redirect()->route('events.show', $event)->withErrors([
+            'prize' => 'お宝QRは、1つのイベントで'.$event->prizeLimit().'枚まで（当たり・ハズレの合計）です。もっと多く使いたいときは、kobapp のお問い合わせからご相談ください。',
+        ]);
     }
 
     /**

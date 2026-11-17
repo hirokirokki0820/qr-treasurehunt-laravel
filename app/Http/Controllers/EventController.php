@@ -6,6 +6,7 @@ use App\Enums\JoinQrPrintSize;
 use App\Enums\QrPrintSize;
 use App\Http\Requests\EventRequest;
 use App\Models\Event;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -59,8 +60,12 @@ class EventController extends Controller
     /**
      * イベント作成フォーム。?copy_from=ID を付けると、過去のイベントの内容を初期値にする。
      */
-    public function create(Request $request): View
+    public function create(Request $request): View|RedirectResponse
     {
+        if (! $request->user()->canCreateEvent()) {
+            return $this->eventLimitReached();
+        }
+
         $pastEvents = $request->user()->events()->withCount('prizes')->latest()->get();
 
         $source = $request->filled('copy_from')
@@ -78,6 +83,10 @@ class EventController extends Controller
 
     public function store(EventRequest $request): RedirectResponse
     {
+        if (! $request->user()->canCreateEvent()) {
+            return $this->eventLimitReached();
+        }
+
         $source = $request->filled('copy_from')
             ? $request->user()->events()->findOrFail($request->integer('copy_from'))
             : null;
@@ -305,6 +314,16 @@ class EventController extends Controller
             'event' => $event,
             'size' => JoinQrPrintSize::tryFrom((string) $request->query('size')) ?? JoinQrPrintSize::Large,
             'sizes' => JoinQrPrintSize::cases(),
+        ]);
+    }
+
+    /**
+     * イベントの数の上限に達したときに、イベント一覧へ戻して知らせる。
+     */
+    private function eventLimitReached(): RedirectResponse
+    {
+        return redirect()->route('events.index')->withErrors([
+            'event' => 'イベントは1つのアカウントで'.User::EVENT_LIMIT.'件まで作れます。使い終わったイベントを削除してから作ってください。',
         ]);
     }
 }

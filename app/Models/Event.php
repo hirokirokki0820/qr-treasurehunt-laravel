@@ -102,7 +102,11 @@ class Event extends Model
      */
     public function copyPrizesFrom(Event $source): int
     {
-        $prizes = $source->prizes()->orderBy('number')->get();
+        // 引き継ぐのは、このイベントに登録できる数まで（No.の小さい順）
+        $limit = $this->prizeLimit();
+        $prizes = $source->prizes()->orderBy('number')
+            ->when($limit !== null, fn (HasMany $query) => $query->limit(max(0, $limit - $this->prizes()->count())))
+            ->get();
 
         foreach ($prizes as $prize) {
             $copy = new Prize($prize->only(['name', 'description', 'is_miss']));
@@ -142,6 +146,24 @@ class Event extends Model
 
             return $this->participants()->delete();
         });
+    }
+
+    /**
+     * このイベントに登録できるお宝QR（景品）の数。当たりもハズレも数える。null は上限なし。
+     */
+    public function prizeLimit(): ?int
+    {
+        return $this->user !== null ? $this->user->prizeLimit() : User::FREE_PRIZE_LIMIT;
+    }
+
+    /**
+     * お宝QR（景品）を、もう追加できないかどうか。
+     */
+    public function isPrizeFull(): bool
+    {
+        $limit = $this->prizeLimit();
+
+        return $limit !== null && $this->prizes()->count() >= $limit;
     }
 
     /**

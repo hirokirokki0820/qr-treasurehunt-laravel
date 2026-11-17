@@ -36,14 +36,29 @@ class User extends Authenticatable
     public const PLANS = ['free', 'monitor', 'admin'];
 
     /**
-     * 正式なサービスを始めるまで、モニターでない人が使える参加者の人数。
+     * 無料で使える、1つのイベントの参加者の人数（参加者カードも含む）。
      */
-    public const FREE_PARTICIPANT_LIMIT = 3;
+    public const FREE_PARTICIPANT_LIMIT = 20;
 
     /**
-     * 採用されたモニターが使える参加者の人数。
+     * 採用されたモニターが使える、1つのイベントの参加者の人数。
      */
     public const MONITOR_PARTICIPANT_LIMIT = 100;
+
+    /**
+     * 無料で使える、1つのイベントのお宝QR（景品）の数。当たりもハズレも数える。
+     */
+    public const FREE_PRIZE_LIMIT = 100;
+
+    /**
+     * 採用されたモニターが使える、1つのイベントのお宝QR（景品）の数。
+     */
+    public const MONITOR_PRIZE_LIMIT = 300;
+
+    /**
+     * 1つのアカウントで持てるイベントの数（ゴミ箱の中は数えない）。サーバーに負担をかけないための上限で、ふだんの使い方では届かない。
+     */
+    public const EVENT_LIMIT = 50;
 
     /**
      * 1つのイベントに参加できる人数（参加者カードも含む）。null は上限なし（運営者）。
@@ -55,6 +70,26 @@ class User extends Authenticatable
             'monitor' => self::MONITOR_PARTICIPANT_LIMIT,
             default => self::FREE_PARTICIPANT_LIMIT,
         };
+    }
+
+    /**
+     * 1つのイベントに登録できるお宝QR（景品）の数。当たりもハズレも数える。null は上限なし（運営者）。
+     */
+    public function prizeLimit(): ?int
+    {
+        return match ($this->plan) {
+            'admin' => null,
+            'monitor' => self::MONITOR_PRIZE_LIMIT,
+            default => self::FREE_PRIZE_LIMIT,
+        };
+    }
+
+    /**
+     * 新しくイベントを作れるかどうか（運営者は上限なし）。
+     */
+    public function canCreateEvent(): bool
+    {
+        return $this->plan === 'admin' || $this->events()->count() < self::EVENT_LIMIT;
     }
 
     public function isMonitorOrAdmin(): bool

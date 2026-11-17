@@ -1,5 +1,8 @@
 @php
     $needsPrizeListPrint = $event->needsPrizeListPrint();
+    $prizeLimit = $event->prizeLimit();
+    $prizeCount = $event->prizes()->count();
+    $prizeFull = $prizeLimit !== null && $prizeCount >= $prizeLimit;
     $item = 'flex min-h-12 w-full items-center gap-2 rounded-xl border-2 border-ink bg-white px-3 py-2.5 text-left text-sm font-bold shadow-[2px_2px_0_0_var(--color-ink)] transition hover:bg-gold/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sea active:translate-x-px active:translate-y-px active:shadow-none';
 @endphp
 
@@ -22,9 +25,16 @@
         @endif
 
         <div class="grid gap-3 sm:grid-cols-2">
-            <a href="{{ route('events.prizes.create', $event) }}" class="{{ $item }} border-dashed bg-gold/15">
-                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gold text-base leading-none ring-2 ring-ink" aria-hidden="true">＋</span>景品を追加
-            </a>
+            @if ($prizeFull)
+                <p class="flex min-h-12 w-full items-center gap-2 rounded-xl border-2 border-dashed border-ink/40 px-3 py-2.5 text-sm font-bold text-ink-soft" data-prize-limit-reached>
+                    <span>お宝QRは{{ $prizeLimit }}枚までです<span class="block text-xs font-normal">当たり・ハズレの合計。これ以上は追加できません</span></span>
+                </p>
+            @else
+                <a href="{{ route('events.prizes.create', $event) }}" class="{{ $item }} border-dashed bg-gold/15">
+                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gold text-base leading-none ring-2 ring-ink" aria-hidden="true">＋</span>
+                    <span>景品を追加@if ($prizeLimit !== null)<span class="block text-xs font-normal text-ink-soft" data-prize-count>お宝QR {{ $prizeCount }}／{{ $prizeLimit }}枚</span>@endif</span>
+                </a>
+            @endif
             <a href="{{ route('events.join-qrcode', $event) }}" class="{{ $item }}"><x-icon name="printer" class="h-5 w-5" />参加用QRを印刷</a>
             <a href="{{ route('events.qrcodes', $event) }}" class="{{ $item }}"><x-icon name="printer" class="h-5 w-5" />お宝用QRを印刷</a>
             <a href="{{ route('events.prize-list', $event) }}" @class([$item, 'bg-gold/30' => $needsPrizeListPrint]) data-prize-list-print-button>
