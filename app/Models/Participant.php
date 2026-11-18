@@ -31,6 +31,13 @@ class Participant extends Authenticatable
             $participant->redeem_token ??= Str::random(40);
         });
 
+        // 本番を開いた回数と人数を残す（片付けると参加者は消えるため）
+        static::created(function (Participant $participant): void {
+            if ($participant->event !== null) {
+                EventRun::recordJoin($participant->event);
+            }
+        });
+
         // 宝探しをやめた参加者の景品は在庫に戻るので、獲得・引き換えの記録も消す
         static::deleting(function (Participant $participant): void {
             $participant->prizes()->update(['acquired_at' => null, 'redeemed_at' => null]);
