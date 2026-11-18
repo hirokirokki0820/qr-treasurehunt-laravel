@@ -4,6 +4,7 @@
             <div>
                 <p class="text-sm font-bold text-ink-soft">{{ auth()->user()->email }} さんのマイページ</p>
                 <h1 class="text-2xl font-black">イベント一覧</h1>
+                <x-free-runs :user="auth()->user()" class="mt-1" />
             </div>
             <div class="flex flex-wrap items-center gap-3">
                 <a href="{{ route('events.create') }}" class="btn-primary">＋ イベントを作成</a>

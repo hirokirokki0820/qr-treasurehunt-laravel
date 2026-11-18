@@ -1,17 +1,18 @@
 <?php
 
 use App\Models\Event;
+use App\Models\EventRun;
 use App\Models\Participant;
 use App\Models\Prize;
 use App\Models\User;
 
-test('organizers who are not monitors can let up to twenty people join', function () {
+test('organizers who are not monitors can let up to forty people join', function () {
     $owner = User::factory()->free()->create();
     $event = Event::factory()->for($owner)->create();
     Participant::factory()->count(User::FREE_PARTICIPANT_LIMIT)->for($event)->create();
 
-    $this->get(route('join', $event))->assertOk()->assertSee('参加できる人数（20人）に達しています');
-    $this->post(route('join.store', $event), ['nickname' => 'にじゅういちにんめ'])->assertSessionHasErrors('nickname');
+    $this->get(route('join', $event))->assertOk()->assertSee('参加できる人数（40人）に達しています');
+    $this->post(route('join.store', $event), ['nickname' => 'よんじゅういちにんめ'])->assertSessionHasErrors('nickname');
 
     expect($event->participants()->count())->toBe(User::FREE_PARTICIPANT_LIMIT);
     $this->assertGuest('participant');
@@ -62,7 +63,7 @@ test('cards are made only up to the limit of free organizers', function () {
     Participant::factory()->count(User::FREE_PARTICIPANT_LIMIT - 2)->for($event)->create();
 
     $this->actingAs($owner)->post(route('cards.store', $event), ['count' => 5])
-        ->assertSessionHas('status', fn (string $status) => str_contains($status, '2枚作りました') && str_contains($status, '参加できるのは20人まで'));
+        ->assertSessionHas('status', fn (string $status) => str_contains($status, '2枚作りました') && str_contains($status, '参加できるのは40人まで'));
 
     expect($event->participants()->count())->toBe(User::FREE_PARTICIPANT_LIMIT);
 });
@@ -121,4 +122,26 @@ test('an account can have up to fifty events', function () {
     $admin = User::factory()->create();
     Event::factory()->count(User::EVENT_LIMIT)->for($admin)->create();
     $this->actingAs($admin)->get(route('events.create'))->assertOk();
+});
+
+test('free organizers see how many live runs they have opened this year and are only told, not stopped, after five', function () {
+    $owner = User::factory()->free()->create();
+    $event = Event::factory()->for($owner)->create();
+    EventRun::query()->create(['user_id' => $owner->id, 'event_id' => $event->id, 'started_at' => now()->subYear(), 'peak_participants' => 3]);
+    foreach (range(1, 3) as $i) {
+        EventRun::query()->create(['user_id' => $owner->id, 'event_id' => $event->id, 'started_at' => now()->subSeconds($i), 'peak_participants' => 3]);
+    }
+
+    $this->actingAs($owner)->get(route('events.index'))->assertSee('data-free-runs="3"', false)->assertSee('3／5回');
+
+    foreach (range(4, 6) as $i) {
+        EventRun::query()->create(['user_id' => $owner->id, 'event_id' => $event->id, 'started_at' => now()->subSeconds($i), 'peak_participants' => 3]);
+    }
+    $this->get(route('events.index'))->assertSee('data-free-runs="over"', false)->assertSee('今年の本番が6回になりました');
+
+    $this->post(route('join.store', $event), ['nickname' => 'ろっかいめのさんかしゃ'])->assertRedirect();
+    expect($event->participants()->count())->toBe(1);
+
+    $monitor = User::factory()->monitor()->create();
+    $this->actingAs($monitor)->get(route('events.index'))->assertDontSee('data-free-runs', false);
 });

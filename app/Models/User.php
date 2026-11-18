@@ -48,7 +48,13 @@ class User extends Authenticatable
     /**
      * 無料で使える、1つのイベントの参加者の人数（参加者カードも含む）。
      */
-    public const FREE_PARTICIPANT_LIMIT = 20;
+    public const FREE_PARTICIPANT_LIMIT = 40;
+
+    /**
+     * 無料で開ける本番の回数（1年＝1月〜12月）。お試しモードは数えない。
+     * 有料プランを始めるまでは、超えても止めずに、問い合わせの案内を出すだけにする。
+     */
+    public const FREE_RUNS_PER_YEAR = 5;
 
     /**
      * 採用されたモニターが使える、1つのイベントの参加者の人数。
@@ -100,6 +106,14 @@ class User extends Authenticatable
     public function canCreateEvent(): bool
     {
         return $this->plan === 'admin' || $this->events()->count() < self::EVENT_LIMIT;
+    }
+
+    /**
+     * 今年（1月〜12月）に開いた本番の回数。
+     */
+    public function runsThisYear(): int
+    {
+        return $this->eventRuns()->where('started_at', '>=', now()->startOfYear())->count();
     }
 
     public function isMonitorOrAdmin(): bool
