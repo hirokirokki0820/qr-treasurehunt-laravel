@@ -21,6 +21,16 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
+     * 本番を開いた記録。
+     *
+     * @return HasMany<EventRun, $this>
+     */
+    public function eventRuns(): HasMany
+    {
+        return $this->hasMany(EventRun::class);
+    }
+
+    /**
      * @return HasMany<Event, $this>
      */
     public function events(): HasMany
