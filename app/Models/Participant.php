@@ -33,8 +33,10 @@ class Participant extends Authenticatable
 
         // 本番を開いた回数と人数を残す（片付けると参加者は消えるため）
         static::created(function (Participant $participant): void {
-            if ($participant->event !== null) {
-                EventRun::recordJoin($participant->event);
+            // 参加者に読み込んだイベントを残さないよう、別に読み込む
+            $event = Event::query()->find($participant->event_id);
+            if ($event !== null) {
+                EventRun::recordJoin($event);
             }
         });
 
