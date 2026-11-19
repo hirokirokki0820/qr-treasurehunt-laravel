@@ -7,14 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * 本番を開いた記録（1回ごと）。お試しモードのあとではなく、本番で最初の参加者が入ったときに作る。
- * 片付けてからまた参加者が入ると、次の1回になる。
+ * 本番を開いた記録（1回ごと）。本番で参加者が4人目になったときに作る（3人までは数えない。お試しモードも数えない）。
+ * 片付けてからまた4人目が入ると、次の1回になる。有料プランを始めたら、無料の回数（年3回）はこの記録で数える。
  */
 #[Fillable(['user_id', 'event_id', 'started_at', 'peak_participants'])]
 class EventRun extends Model
 {
     /**
-     * 参加者が入ったことを記録する。本番の最初の1人なら新しい回を作り、そうでなければ今の回の最大人数を更新する。
+     * 本番の1回として数え始める参加者の人数（4人目）。3人までは、お試しと取り違えたときのために数えない。
+     */
+    public const COUNTS_FROM = 4;
+
+    /**
+     * 参加者が入ったことを記録する。本番の4人目なら新しい回を作り、5人目からは今の回の最大人数を更新する。
      */
     public static function recordJoin(Event $event): void
     {
@@ -24,12 +29,16 @@ class EventRun extends Model
 
         $count = $event->participants()->count();
 
-        if ($count === 1) {
+        if ($count < self::COUNTS_FROM) {
+            return;
+        }
+
+        if ($count === self::COUNTS_FROM) {
             static::query()->create([
                 'user_id' => $event->user_id,
                 'event_id' => $event->id,
                 'started_at' => now(),
-                'peak_participants' => 1,
+                'peak_participants' => $count,
             ]);
 
             return;

@@ -27,6 +27,14 @@
             <p class="mt-2 rounded-xl bg-sea/10 px-3 py-2 text-sm font-bold text-sea">「{{ $source->name }}」の内容を反映しました。必要に応じて書き換えてください。</p>
         @endif
 
+        @php($participantLimit = auth()->user()->participantLimit())
+        @if ($participantLimit !== null)
+            <div class="mt-3 rounded-xl border-2 border-ink/20 bg-gold/15 px-4 py-3 text-sm" role="note" data-participant-limit-notice>
+                <p>当日、参加人数が上限（{{ $participantLimit }}人）に達すると、それ以上は参加できません。人数が増えそうな場合は、余裕を持った人数でご準備ください。</p>
+                <p class="mt-1 text-ink-soft">同じ方でも、別の端末から参加すると1人として数えます。参加者カードも1枚で1人です。</p>
+            </div>
+        @endif
+
         <form method="POST" action="{{ route('events.store') }}" class="mt-6 space-y-4">
             @csrf
             @include('events.form')
