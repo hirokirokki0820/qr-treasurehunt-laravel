@@ -49,7 +49,7 @@ class JoinController extends Controller
         if ($participant === null) {
             return back()->withInput()->withErrors(['nickname' => $event->trial_mode
                 ? 'このイベントは今お試しモードで、参加できるのは'.Event::TRIAL_PARTICIPANT_LIMIT.'人までです。本番が始まるまでお待ちください。'
-                : 'このイベントは、参加できる人数（'.$event->participantLimit().'人）に達しています。主催者にお知らせください。']);
+                : 'このイベントは参加人数の上限に達しました。くわしくは主催者にお問い合わせください。']);
         }
 
         Auth::guard('participant')->login($participant, remember: true);

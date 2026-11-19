@@ -20,5 +20,11 @@
                 <a href="{{ route('events.participants', $event) }}" class="text-sm font-bold text-sea underline underline-offset-2">一覧を見る</a>
             @endif
         </dd>
+        @php($participantLimit = $event->participantLimit())
+        @if ($participantLimit !== null && ! $event->trial_mode && $participantLimit - $event->participants_count <= 5)
+            <dd class="mt-1 text-xs font-bold text-ruby" role="status" data-participant-room>
+                {{ $event->participants_count >= $participantLimit ? '上限（'.$participantLimit.'人）に達しました' : '残り'.($participantLimit - $event->participants_count).'人です（上限'.$participantLimit.'人）' }}
+            </dd>
+        @endif
     </div>
 </dl>

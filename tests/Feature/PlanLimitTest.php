@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Event;
-use App\Models\EventRun;
 use App\Models\Participant;
 use App\Models\Prize;
 use App\Models\User;
@@ -11,7 +10,7 @@ test('organizers who are not monitors can let up to forty people join', function
     $event = Event::factory()->for($owner)->create();
     Participant::factory()->count(User::FREE_PARTICIPANT_LIMIT)->for($event)->create();
 
-    $this->get(route('join', $event))->assertOk()->assertSee('参加できる人数（40人）に達しています');
+    $this->get(route('join', $event))->assertOk()->assertSee('このイベントは参加人数の上限に達しました。くわしくは主催者にお問い合わせください。');
     $this->post(route('join.store', $event), ['nickname' => 'よんじゅういちにんめ'])->assertSessionHasErrors('nickname');
 
     expect($event->participants()->count())->toBe(User::FREE_PARTICIPANT_LIMIT);
@@ -124,24 +123,35 @@ test('an account can have up to fifty events', function () {
     $this->actingAs($admin)->get(route('events.create'))->assertOk();
 });
 
-test('free organizers see how many live runs they have opened this year and are only told, not stopped, after five', function () {
+test('free organizers are told that live runs are unlimited until paid plans start', function () {
     $owner = User::factory()->free()->create();
     $event = Event::factory()->for($owner)->create();
-    EventRun::query()->create(['user_id' => $owner->id, 'event_id' => $event->id, 'started_at' => now()->subYear(), 'peak_participants' => 3]);
-    foreach (range(1, 3) as $i) {
-        EventRun::query()->create(['user_id' => $owner->id, 'event_id' => $event->id, 'started_at' => now()->subSeconds($i), 'peak_participants' => 3]);
-    }
 
-    $this->actingAs($owner)->get(route('events.index'))->assertSee('data-free-runs="3"', false)->assertSee('3／5回');
+    $this->actingAs($owner)->get(route('events.show', $event))
+        ->assertSee('本番は何度でも無料で使えます')
+        ->assertSee('有料プランを始めるまでの期間限定です（始めたあとは年3回になる予定）');
+});
 
-    foreach (range(4, 6) as $i) {
-        EventRun::query()->create(['user_id' => $owner->id, 'event_id' => $event->id, 'started_at' => now()->subSeconds($i), 'peak_participants' => 3]);
-    }
-    $this->get(route('events.index'))->assertSee('data-free-runs="over"', false)->assertSee('今年の本番が6回になりました');
+test('the create page warns about the participant limit for free organizers but not for admins', function () {
+    $this->actingAs(User::factory()->free()->create())->get(route('events.create'))
+        ->assertSee('data-participant-limit-notice', false)
+        ->assertSee('参加人数が上限（40人）に達すると、それ以上は参加できません')
+        ->assertSee('別の端末から参加すると1人として数えます');
 
-    $this->post(route('join.store', $event), ['nickname' => 'ろっかいめのさんかしゃ'])->assertRedirect();
-    expect($event->participants()->count())->toBe(1);
+    $this->actingAs(User::factory()->create())->get(route('events.create'))
+        ->assertDontSee('data-participant-limit-notice', false);
+});
 
-    $monitor = User::factory()->monitor()->create();
-    $this->actingAs($monitor)->get(route('events.index'))->assertDontSee('data-free-runs', false);
+test('organizers are told when five or fewer places remain', function () {
+    $owner = User::factory()->free()->create();
+    $event = Event::factory()->for($owner)->create();
+    Participant::factory()->count(User::FREE_PARTICIPANT_LIMIT - 6)->for($event)->create();
+
+    $this->actingAs($owner)->get(route('events.show', $event))->assertDontSee('data-participant-room', false);
+
+    Participant::factory()->for($event)->create();
+    $this->get(route('events.show', $event))->assertSee('残り5人です（上限40人）');
+
+    Participant::factory()->count(5)->for($event)->create();
+    $this->get(route('events.show', $event))->assertSee('上限（40人）に達しました');
 });
