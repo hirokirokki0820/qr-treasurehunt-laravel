@@ -3,6 +3,7 @@
 use App\Models\Event;
 use App\Models\Participant;
 use App\Models\User;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -39,5 +40,5 @@ test('nothing is shown when kobapp.jp has no notice, is down, or returns somethi
     'no notice' => fn () => fn () => Http::response(['notice' => null]),
     'server error' => fn () => fn () => Http::response('', 500),
     'odd level' => fn () => fn () => Http::response(['notice' => ['message' => 'x', 'level' => 'danger']]),
-    'timeout' => fn () => fn () => throw new \Illuminate\Http\Client\ConnectionException('timeout'),
+    'timeout' => fn () => fn () => throw new ConnectionException('timeout'),
 ]);
