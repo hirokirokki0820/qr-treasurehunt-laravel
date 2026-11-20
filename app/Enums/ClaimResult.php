@@ -14,4 +14,5 @@ enum ClaimResult: string
     case LimitReached = 'limit_reached';
     case NotStarted = 'not_started';
     case TimeUp = 'time_up';
+    case PaperMode = 'paper_mode';
 }

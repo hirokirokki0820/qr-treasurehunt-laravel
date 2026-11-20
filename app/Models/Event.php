@@ -143,7 +143,7 @@ class Event extends Model
         return DB::transaction(function (): int {
             $this->resetAcquisitions();
             // 紙の景品リストは「渡した人」を書き込んで使うので、次の回の前に印刷し直してもらう
-            $this->forceFill(['started_at' => null, 'ends_at' => null, 'prize_list_printed_at' => null, 'trial_mode' => false])->save();
+            $this->forceFill(['started_at' => null, 'ends_at' => null, 'prize_list_printed_at' => null, 'trial_mode' => false, 'paper_mode_at' => null])->save();
 
             return $this->participants()->delete();
         });
@@ -388,6 +388,14 @@ class Event extends Model
     }
 
     /**
+     * 当日つながらなくなって、紙に切り替えたかどうか。切り替えたあいだは、アプリで宝箱を開けられない。
+     */
+    public function isPaperMode(): bool
+    {
+        return $this->paper_mode_at !== null;
+    }
+
+    /**
      * 宝探しタイマーの今の状態。
      */
     public function timerState(): TimerState
@@ -473,7 +481,8 @@ class Event extends Model
             'ends' => $this->ends_at?->format('H:i'),
             'ends_ms' => $state === TimerState::Running ? $this->ends_at->getTimestampMs() : null,
             'now_ms' => now()->getTimestampMs(),
-            'version' => $state->value.':'.($this->ends_at?->getTimestamp() ?? 0),
+            'version' => $state->value.':'.($this->ends_at?->getTimestamp() ?? 0).($this->isPaperMode() ? ':paper' : ''),
+            'paper' => $this->isPaperMode(),
         ];
     }
 
@@ -507,6 +516,7 @@ class Event extends Model
             'count_misses_toward_limit' => 'boolean',
             'time_limit_minutes' => 'integer',
             'started_at' => 'datetime',
+            'paper_mode_at' => 'datetime',
             'ends_at' => 'datetime',
             'prize_list_printed_at' => 'datetime',
             'trial_mode' => 'boolean',

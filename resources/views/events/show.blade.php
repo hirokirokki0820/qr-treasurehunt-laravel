@@ -37,6 +37,7 @@
 
     @if ($isOnTheDay)
         {{-- 当日：残り時間 → 引き換え → 景品の状況 の順。準備の操作は下にたたむ --}}
+        <x-paper-mode :event="$event" />
         <x-event-timer :event="$event" />
         @include('events.show.redeem-button')
         @include('events.show.summary')

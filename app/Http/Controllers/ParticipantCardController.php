@@ -150,6 +150,7 @@ class ParticipantCardController extends Controller
         if ($result === null) {
             $result = match (true) {
                 $prize->participant_id === $card->id => ClaimResult::AlreadyMine,
+                $card->event->isPaperMode() => ClaimResult::PaperMode,
                 $timer === TimerState::Waiting => ClaimResult::NotStarted,
                 $timer === TimerState::Ended => ClaimResult::TimeUp,
                 $card->hasReachedPrizeLimit() => ClaimResult::LimitReached,

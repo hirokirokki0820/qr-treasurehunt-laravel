@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\KobappScheduleController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\KobappLoginController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventPaperController;
 use App\Http\Controllers\EventTimerController;
 use App\Http\Controllers\EventTrialController;
 use App\Http\Controllers\GuestController;
@@ -74,6 +75,8 @@ Route::prefix('host')->group(function () {
         Route::post('events/{event}/end', [EventController::class, 'end'])->name('events.end');
         Route::post('events/{event}/trial/start', [EventTrialController::class, 'start'])->name('events.trial.start');
         Route::post('events/{event}/trial/end', [EventTrialController::class, 'end'])->name('events.trial.end');
+        Route::post('events/{event}/paper', [EventPaperController::class, 'start'])->name('events.paper.start');
+        Route::delete('events/{event}/paper', [EventPaperController::class, 'end'])->name('events.paper.end');
         Route::get('events/{event}/timer/status', [EventTimerController::class, 'status'])->name('events.timer.status');
         Route::post('events/{event}/timer/start', [EventTimerController::class, 'start'])->name('events.timer.start');
         Route::post('events/{event}/timer/extend', [EventTimerController::class, 'extend'])->name('events.timer.extend');

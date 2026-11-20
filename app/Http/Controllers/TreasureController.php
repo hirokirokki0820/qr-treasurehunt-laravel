@@ -36,6 +36,7 @@ class TreasureController extends Controller
         if ($result === null) {
             $result = match (true) {
                 $prize->participant_id === $participant->id => ClaimResult::AlreadyMine,
+                $participant->event->isPaperMode() => ClaimResult::PaperMode,
                 $timer === TimerState::Waiting => ClaimResult::NotStarted,
                 $timer === TimerState::Ended => ClaimResult::TimeUp,
                 $participant->hasReachedPrizeLimit() => ClaimResult::LimitReached,
@@ -48,7 +49,7 @@ class TreasureController extends Controller
             'prize' => $prize,
             'result' => $result,
             'limitReached' => $participant->hasReachedPrizeLimit(),
-            'canScan' => $timer->acceptsTreasures() && ! $participant->hasReachedPrizeLimit(),
+            'canScan' => $timer->acceptsTreasures() && ! $participant->hasReachedPrizeLimit() && ! $participant->event->isPaperMode(),
         ]);
     }
 

@@ -124,6 +124,13 @@ export function setUpTimers() {
                     const status = await response.json();
                     sync.add(Number(status.now_ms), sentAt, Date.now());
 
+                    // 主催者が紙に切り替えた（またはアプリに戻した）ら、宝探しの途中でも読み込み直して案内を出す
+                    if (timer.dataset.paper !== undefined && String(Boolean(status.paper)) !== timer.dataset.paper) {
+                        reload();
+
+                        return;
+                    }
+
                     if (running && status.state === 'running') {
                         // 宝探し中のまま（延長を含む）なら、再読み込みせずに終了時刻を差し替える
                         endsAt = Number(status.ends_ms) || sync.now() + status.remaining * 1000;
