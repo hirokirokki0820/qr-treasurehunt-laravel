@@ -87,6 +87,7 @@
             </nav>
         </div>
     </header>
+    <x-kobapp-notice />
 
     @if (session('status'))
         <div
