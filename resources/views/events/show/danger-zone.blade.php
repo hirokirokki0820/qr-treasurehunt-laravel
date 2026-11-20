@@ -20,11 +20,11 @@
         <section class="flex flex-col gap-3 rounded-xl bg-white p-4">
             <h3 class="font-black">イベントを片付ける（次の回の準備）</h3>
             <ul class="space-y-1 text-sm">
-                <li><span class="font-bold text-ruby">消えるもの：</span>参加者（全員ログアウト）、獲得と引き換えの記録、タイマー、お試しモード、景品リストを印刷した印</li>
+                <li><span class="font-bold text-ruby">消えるもの：</span>参加者（全員ログアウト）、獲得と引き換えの記録、タイマーの進み具合（リセット。制限時間の設定は残る）、お試しモード、景品リストを印刷した印</li>
                 <li><span class="font-bold text-sea">残るもの：</span>イベントの設定、景品、QRコード（印刷したQRを次の回にそのまま使えます）</li>
             </ul>
             <p class="text-xs text-ink-soft">イベントそのものを消すときは、イベント一覧の「イベントを選択する」から削除します。</p>
-            <form method="POST" action="{{ route('events.end', $event) }}" class="mt-auto" data-confirm="イベントを片付けます。参加者は全員ログアウトされ、獲得と引き換えの記録、タイマーが消えます（景品とQRコードは残ります）。元に戻せません。よろしいですか？" data-confirm-again="本当に片付けてよろしいですか？&#10;参加中の人は全員ログアウトされます。">
+            <form method="POST" action="{{ route('events.end', $event) }}" class="mt-auto" data-confirm="イベントを片付けます。参加者は全員ログアウトされ、獲得と引き換えの記録が消えて、タイマーはリセットされます（景品とQRコード、制限時間の設定は残ります）。元に戻せません。よろしいですか？" data-confirm-again="本当に片付けてよろしいですか？&#10;参加中の人は全員ログアウトされます。">
                 @csrf
                 <button type="submit" class="btn-danger w-full py-3"><x-icon name="stop" />イベントを片付ける</button>
             </form>

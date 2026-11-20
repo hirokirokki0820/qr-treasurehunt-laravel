@@ -34,6 +34,6 @@ class EventTrialController extends Controller
 
         $event->endTrial();
 
-        return back()->with('status', 'お試しを終えました。お試しの参加者と獲得の記録、タイマーを消したので、このまま本番を始められます。');
+        return back()->with('status', 'お試しを終えました。お試しの参加者と獲得の記録を消し、タイマーをリセットしたので、このまま本番を始められます（制限時間の設定はそのままです）。');
     }
 }
