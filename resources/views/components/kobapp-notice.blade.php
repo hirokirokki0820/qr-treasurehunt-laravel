@@ -1,5 +1,5 @@
 {{-- kobapp.jp から出した障害・メンテナンスのお知らせ（主催者としてログインしているときだけ。文は {{ }} で出す） --}}
-@if (auth()->check() && ($kobappNotice = \App\Support\KobappNotice::current()))
+@if (auth('web')->check() && ($kobappNotice = \App\Support\KobappNotice::current()))
     <div @class([
         'no-print border-b-2 px-4 py-3 text-sm',
         'border-ruby bg-ruby/10' => $kobappNotice['level'] === 'warning',
