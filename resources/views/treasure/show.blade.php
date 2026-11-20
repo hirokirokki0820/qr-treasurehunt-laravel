@@ -33,6 +33,13 @@
                 <x-limit-reached :event="$prize->event" class="mt-4" />
                 @break
 
+            @case(ClaimResult::PaperMode)
+                <x-chest class="mx-auto h-28 w-28 opacity-40 grayscale" />
+                <p class="mt-2 text-sm font-bold tracking-widest text-ink-soft">お宝 No.{{ $prize->number }}</p>
+                <h1 class="mt-1 text-2xl font-black">ここからは紙で宝探し！</h1>
+                <p class="mt-2 text-ink-soft">見つけたQRカードを取って、受付に持ってきてね。アプリで開けたお宝は、獲得した景品の画面を受付で見せてね。</p>
+                @break
+
             @case(ClaimResult::NotStarted)
                 <x-chest class="mx-auto h-28 w-28 opacity-40 grayscale" />
                 <p class="mt-2 text-sm font-bold tracking-widest text-ink-soft">お宝 No.{{ $prize->number }}</p>
@@ -66,13 +73,13 @@
 
         @if ($result !== null)
             <div class="mt-8 flex flex-col gap-3">
-                @if ($limitReached && ! in_array($result, [ClaimResult::LimitReached, ClaimResult::NotStarted, ClaimResult::TimeUp], true))
+                @if ($limitReached && ! in_array($result, [ClaimResult::LimitReached, ClaimResult::NotStarted, ClaimResult::TimeUp, ClaimResult::PaperMode], true))
                     <p class="rounded-xl bg-gold/20 px-3 py-2 text-sm font-bold">これで獲得上限（{{ $prize->event->prizeLimitLabel() }}）に達しました。受付で景品と交換してね！</p>
                 @endif
                 @if ($canScan)
                     <a href="{{ route('play.scan') }}" class="btn-primary w-full"><x-icon name="camera" />次のQRコードを読み取る</a>
                 @endif
-                <a href="{{ route('play.index') }}" class="btn-secondary w-full">{{ in_array($result, [ClaimResult::NotStarted, ClaimResult::TimeUp], true) ? 'マイページに戻る' : '獲得した景品を見る' }}</a>
+                <a href="{{ route('play.index') }}" class="btn-secondary w-full">{{ in_array($result, [ClaimResult::NotStarted, ClaimResult::TimeUp, ClaimResult::PaperMode], true) ? 'マイページに戻る' : '獲得した景品を見る' }}</a>
             </div>
         @endif
     </div>

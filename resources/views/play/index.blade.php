@@ -9,7 +9,14 @@
 
     @php($timer = $event->timerState())
 
-    @if ($timer === \App\Enums\TimerState::Ended)
+    @if ($event->isPaperMode())
+        {{-- 紙に切り替えたあと。タイマーの問い合わせは続けて、主催者がアプリに戻したら自動で読み込み直す --}}
+        <div class="mt-6 rounded-2xl border-2 border-ink bg-gold/30 px-5 py-5 text-center" role="status" data-paper-mode>
+            <p class="text-lg font-black">ここからは紙で宝探し！</p>
+            <p class="mt-1 text-sm">見つけたQRカードを取って、受付に持ってきてね。アプリで開けたお宝は、下の「獲得した景品」を受付で見せてね。</p>
+        </div>
+        <div class="hidden"><x-play-timer :event="$event" /></div>
+    @elseif ($timer === \App\Enums\TimerState::Ended)
         <x-play-timer :event="$event" />
     @elseif ($remainingAllowance === 0)
         <x-limit-reached :event="$event" class="mt-6" :redeem-link="$participant->prizes()->whereNull('redeemed_at')->exists()" />

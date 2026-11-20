@@ -65,6 +65,11 @@ class Prize extends Model
             return ClaimResult::AlreadyMine;
         }
 
+        // 紙に切り替えたあとは、アプリで開けない（アプリと紙が混ざって二重に渡さないように）
+        if ($participant->event->isPaperMode()) {
+            return ClaimResult::PaperMode;
+        }
+
         $timer = $participant->event->timerState();
 
         if (! $timer->acceptsTreasures()) {

@@ -37,6 +37,12 @@
                 <p class="mt-2 text-ink-soft">この子は獲得上限（{{ $prize->event->prizeLimitLabel() }}）に達しています。</p>
                 @break
 
+            @case(ClaimResult::PaperMode)
+                <x-chest class="mx-auto mt-2 h-28 w-28 opacity-40 grayscale" />
+                <h1 class="mt-3 text-2xl font-black">紙に切り替えています</h1>
+                <p class="mt-2 text-ink-soft">紙で続けているあいだは、アプリで宝箱を開けません。QRカードを受け取り、景品リストの「渡した人」に名前を書いて渡してください。</p>
+                @break
+
             @case(ClaimResult::NotStarted)
                 <x-chest class="mx-auto mt-2 h-28 w-28 opacity-40 grayscale" />
                 <h1 class="mt-3 text-2xl font-black">まだスタートしていません</h1>
