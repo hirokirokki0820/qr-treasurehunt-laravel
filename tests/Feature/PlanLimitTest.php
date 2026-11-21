@@ -129,7 +129,7 @@ test('free organizers are told that live runs are unlimited until paid plans sta
 
     $this->actingAs($owner)->get(route('events.show', $event))
         ->assertSee('本番は何度でも無料で使えます')
-        ->assertSee('有料プランを始めるまでの期間限定です（始めたあとは年3回になる予定）');
+        ->assertSee('有料プランを始めるまでの期間限定です（始めたあとは年5回になる予定）');
 });
 
 test('the create page warns about the participant limit for free organizers but not for admins', function () {

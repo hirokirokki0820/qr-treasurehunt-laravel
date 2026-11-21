@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * 本番を開いた記録（1回ごと）。本番で参加者が4人目になったときに作る（3人までは数えない。お試しモードも数えない）。
- * 片付けてからまた4人目が入ると、次の1回になる。有料プランを始めたら、無料の回数（年3回）はこの記録で数える。
+ * 片付けてからまた4人目が入ると、次の1回になる。有料プランを始めたら、無料の回数（年5回）はこの記録で数える。
  */
 #[Fillable(['user_id', 'event_id', 'started_at', 'peak_participants'])]
 class EventRun extends Model
