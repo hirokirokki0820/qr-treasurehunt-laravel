@@ -1,7 +1,7 @@
 @props(['event'])
 
 {{--
-    当日つながらなくなったときの「紙に切り替えた」。切り替えたあとは目立つ案内を出し、
+    当日つながらなくなったときの「紙に切り替える」。切り替えたあとは目立つ案内を出し、
     切り替える前は、ふだんの操作のじゃまにならないよう小さくたたんでおく。
 --}}
 @php($helpUrl = rtrim((string) config('services.kobapp.url'), '/').'/help/qr-takarasagashi/trouble#switch')
@@ -35,7 +35,7 @@
             <p class="mt-1 text-ink-soft">このボタンは、主催者のスマホがつながっているときに押せます。主催者もつながらないときは、押さずに<a href="{{ $helpUrl }}" class="font-bold text-sea underline" target="_blank" rel="noopener">紙で続ける手順</a>どおりに進めてください。</p>
             <form method="POST" action="{{ route('events.paper.start', $event) }}" class="mt-3" data-confirm="紙に切り替えます。参加者のアプリでは宝箱を開けられなくなり、「QRカードを取って受付へ」と案内が出ます。よろしいですか？">
                 @csrf
-                <button type="submit" class="btn-danger text-sm">紙に切り替えた</button>
+                <button type="submit" class="btn-danger text-sm">紙に切り替える</button>
             </form>
         </div>
     </details>
