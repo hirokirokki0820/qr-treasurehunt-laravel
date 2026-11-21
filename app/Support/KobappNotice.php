@@ -9,6 +9,7 @@ use Throwable;
 /**
  * kobapp.jp の管理画面から出した、障害・メンテナンスのお知らせ（主催者の画面に出す）。
  * 1分ごとに kobapp.jp に取りに行き、取れないとき（kobapp.jp が止まっているときなど）は何も出さない。
+ * 「お知らせなし」も1分ためておく（null のままだとためられず、主催者が画面を開くたびに取りに行ってしまう）。
  */
 class KobappNotice
 {
@@ -20,19 +21,25 @@ class KobappNotice
      */
     public static function current(): ?array
     {
-        return Cache::remember('kobapp-site-notice', 60, function (): ?array {
-            try {
-                $response = Http::timeout(2)->acceptJson()->get(rtrim((string) config('services.kobapp.url'), '/').'/api/site-notice');
-            } catch (Throwable) {
-                return null;
-            }
+        return Cache::remember('kobapp-site-notice', 60, fn (): array => ['notice' => self::fetch()])['notice'] ?? null;
+    }
 
-            $notice = $response->successful() ? $response->json('notice') : null;
-            if (! is_array($notice) || ! is_string($notice['message'] ?? null) || $notice['message'] === '' || ! in_array($notice['level'] ?? null, self::LEVELS, true)) {
-                return null;
-            }
+    /**
+     * @return array{message: string, level: string}|null
+     */
+    private static function fetch(): ?array
+    {
+        try {
+            $response = Http::timeout(2)->acceptJson()->get(rtrim((string) config('services.kobapp.url'), '/').'/api/site-notice');
+        } catch (Throwable) {
+            return null;
+        }
 
-            return ['message' => mb_substr($notice['message'], 0, 200), 'level' => $notice['level']];
-        });
+        $notice = $response->successful() ? $response->json('notice') : null;
+        if (! is_array($notice) || ! is_string($notice['message'] ?? null) || $notice['message'] === '' || ! in_array($notice['level'] ?? null, self::LEVELS, true)) {
+            return null;
+        }
+
+        return ['message' => mb_substr($notice['message'], 0, 200), 'level' => $notice['level']];
     }
 }

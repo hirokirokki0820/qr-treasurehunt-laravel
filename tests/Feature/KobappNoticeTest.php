@@ -33,9 +33,19 @@ test('participants do not see the notice', function () {
 });
 
 test('nothing is shown when kobapp.jp has no notice, is down, or returns something odd', function (Closure $response) {
-    Http::fake(['kobapp.example.test/*' => $response]);
+    $calls = 0;
+    Http::fake(['kobapp.example.test/*' => function () use (&$calls, $response) {
+        $calls++;
+
+        return $response();
+    }]);
 
     $this->actingAs(User::factory()->create())->get(route('events.index'))->assertOk()->assertDontSee('data-kobapp-notice', false);
+
+    // 「なし」や取れなかったときも1分はためて、画面を開くたびに kobapp.jp へ取りに行かない（止まっているときに毎回2秒待たせない）
+    $this->get(route('events.index'))->assertOk();
+    $this->get(route('events.index'))->assertOk();
+    expect($calls)->toBe(1);
 })->with([
     'no notice' => fn () => fn () => Http::response(['notice' => null]),
     'server error' => fn () => fn () => Http::response('', 500),
